@@ -1,8 +1,10 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Dumbbell, Home, Trophy, Settings, Play, Plus, Activity } from 'lucide-react';
 import { VideoPlayer } from './components/VideoPlayer';
 import { RestTimer } from './components/RestTimer';
 import { WorkoutBuilder } from './pages/WorkoutBuilder';
+import { supabase } from './lib/supabase';
 import './App.css'; // Limpar o App.css se existir, usando apenas index.css
 
 function Navbar() {
@@ -87,32 +89,71 @@ function HomePage() {
 }
 
 function TreinosPage() {
-  return (
-    <div className="container animate-fade-in" style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
-      <h2>Treino de Perna (Exemplo)</h2>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>3 Exercícios • 45 min</p>
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        {/* Exemplo de Vídeo Local com Loop */}
-        <div>
-          <VideoPlayer 
-            type="local_video" 
-            url="https://www.w3schools.com/html/mov_bbb.mp4" 
-            title="1. Agachamento Livre" 
-          />
-          <RestTimer initialSeconds={90} />
-        </div>
+  const [routines, setRoutines] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
 
-        {/* Exemplo de Vídeo do YouTube */}
-        <div>
-          <VideoPlayer 
-            type="youtube" 
-            url="https://www.youtube.com/watch?v=1Tq3QdYMTkY" 
-            title="2. Leg Press 45º" 
-          />
-          <RestTimer initialSeconds={60} />
-        </div>
+  React.useEffect(() => {
+    async function fetchRoutines() {
+      try {
+        const { data, error } = await supabase
+          .from('routines')
+          .select('*, routine_exercises(*, exercises(*))');
+        
+        if (error) throw error;
+        setRoutines(data || []);
+      } catch (err) {
+        console.error("Erro ao buscar treinos", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchRoutines();
+  }, []);
+
+  if (loading) return <div className="container" style={{ paddingTop: '2rem' }}>Carregando treinos...</div>;
+
+  return (
+    <div className="container animate-fade-in" style={{ paddingTop: '2rem', paddingBottom: '6rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+        <h2>Seus Treinos Salvos</h2>
+        <Link to="/montar-treino" className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', borderRadius: '8px' }}>
+          + Novo
+        </Link>
       </div>
+
+      {routines.length === 0 ? (
+        <div className="glass-card" style={{ textAlign: 'center', padding: '2rem' }}>
+          <p style={{ color: 'var(--text-secondary)' }}>Nenhum treino salvo ainda.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          {routines.map(routine => (
+            <div key={routine.id} className="glass-card">
+              <h3 style={{ color: 'var(--primary-color)' }}>{routine.name}</h3>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>{routine.day_of_week}</p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                {routine.routine_exercises && routine.routine_exercises.sort((a,b)=>a.sort_order - b.sort_order).map((rx, idx) => {
+                  const ex = rx.exercises;
+                  return (
+                    <div key={rx.id}>
+                      <VideoPlayer 
+                        type={ex.media_type} 
+                        url={ex.media_url} 
+                        title={`${idx + 1}. ${ex.name}`} 
+                      />
+                      <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+                        Séries: {rx.sets} | Repetições: {rx.reps}
+                      </p>
+                      <RestTimer initialSeconds={60} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
