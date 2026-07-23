@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Plus, Save, Trash2, Video, Link as LinkIcon, Dumbbell } from 'lucide-react';
+import { Plus, Save, Trash2, Video, Dumbbell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 export function WorkoutBuilder() {
   const navigate = useNavigate();
   const [routineName, setRoutineName] = useState('');
   const [dayOfWeek, setDayOfWeek] = useState('Segunda-feira');
+  const [isSaving, setIsSaving] = useState(false);
   
   const [exercises, setExercises] = useState([
     { id: Date.now(), name: '', sets: 3, reps: '10', media_url: '', media_type: 'youtube' }
@@ -23,15 +25,63 @@ export function WorkoutBuilder() {
     setExercises(exercises.map(ex => ex.id === id ? { ...ex, [field]: value } : ex));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!routineName) {
       alert("Por favor, dê um nome para o treino!");
       return;
     }
-    // Aqui no futuro chamaremos o Supabase para salvar no DB
-    console.log("Salvando treino:", { routineName, dayOfWeek, exercises });
-    alert("Treino salvo com sucesso!");
-    navigate('/treinos');
+
+    try {
+      setIsSaving(true);
+      // 1. Salvar o treino
+      const { data: routineData, error: routineError } = await supabase
+        .from('routines')
+        .insert([{ name: routineName, day_of_week: dayOfWeek }])
+        .select()
+        .single();
+
+      if (routineError) throw routineError;
+
+      // 2. Salvar os exercícios e linkar com o treino
+      for (let i = 0; i < exercises.length; i++) {
+        const ex = exercises[i];
+        if (!ex.name) continue;
+
+        // Inserir exercício
+        const { data: exData, error: exError } = await supabase
+          .from('exercises')
+          .insert([{ 
+            name: ex.name, 
+            media_url: ex.media_url || 'https://www.w3schools.com/html/mov_bbb.mp4', 
+            media_type: ex.media_type 
+          }])
+          .select()
+          .single();
+
+        if (exError) throw exError;
+
+        // Ligar exercício ao treino
+        const { error: relError } = await supabase
+          .from('routine_exercises')
+          .insert([{
+            routine_id: routineData.id,
+            exercise_id: exData.id,
+            sort_order: i + 1,
+            sets: parseInt(ex.sets) || 3,
+            reps: ex.reps || '10'
+          }]);
+          
+        if (relError) throw relError;
+      }
+
+      alert("Treino salvo com sucesso no banco de dados!");
+      navigate('/treinos');
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      alert("Ocorreu um erro ao salvar o treino.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -148,8 +198,8 @@ export function WorkoutBuilder() {
       </button>
 
       <div style={{ position: 'fixed', bottom: '80px', left: 0, width: '100%', padding: '1rem', background: 'linear-gradient(to top, var(--bg-dark), transparent)', display: 'flex', justifyContent: 'center' }}>
-        <button onClick={handleSave} className="btn btn-primary" style={{ width: '100%', maxWidth: '400px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
-          <Save size={20} /> Salvar Treino
+        <button onClick={handleSave} disabled={isSaving} className="btn btn-primary" style={{ width: '100%', maxWidth: '400px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', opacity: isSaving ? 0.7 : 1 }}>
+          <Save size={20} /> {isSaving ? 'Salvando...' : 'Salvar Treino'}
         </button>
       </div>
     </div>
