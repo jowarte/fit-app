@@ -1,3 +1,6 @@
+[phases.setup]
+nixPkgs = ["nodejs"]
+
 [phases.install]
 cmds = ["npm install"]
 
@@ -5,4 +8,4 @@ cmds = ["npm install"]
 cmds = ["npm run build"]
 
 [start]
-cmd = "caddy run --config /assets/Caddyfile --adapter caddyfile 2>&1"
+cmd = "npx serve -s dist"
