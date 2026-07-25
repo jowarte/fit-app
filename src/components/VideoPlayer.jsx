@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Repeat } from 'lucide-react';
 
 export function VideoPlayer({ url, type, title }) {
+  const [isLooping, setIsLooping] = useState(true);
   // type pode ser 'youtube', 'local_video', ou 'gif'
   
   if (!url) return <div className="glass-card" style={{ padding: '2rem', textAlign: 'center' }}>Mídia não encontrada</div>;
@@ -24,7 +26,7 @@ export function VideoPlayer({ url, type, title }) {
         <iframe 
           width="100%" 
           height="100%" 
-          src={`https://www.youtube.com/embed/${videoId}?loop=1&playlist=${videoId}`} 
+          src={`https://www.youtube.com/embed/${videoId}?loop=${isLooping ? 1 : 0}${isLooping ? `&playlist=${videoId}` : ''}`} 
           title={title || "YouTube video player"} 
           frameBorder="0" 
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -40,7 +42,7 @@ export function VideoPlayer({ url, type, title }) {
           width="100%" 
           controls 
           autoPlay 
-          loop 
+          loop={isLooping}
           muted // muted é recomendado para autoplay em mobile funcionar bem
           playsInline // muito importante para iOS (iPhone)
           style={{ borderRadius: '12px', backgroundColor: '#000', maxHeight: '400px' }}
@@ -67,7 +69,30 @@ export function VideoPlayer({ url, type, title }) {
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
       {renderMedia()}
-      {title && <h3 style={{ fontSize: '1.1rem', marginTop: '0.5rem' }}>{title}</h3>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+        {title && <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{title}</h3>}
+        {type !== 'gif' && (
+          <button 
+            onClick={() => setIsLooping(!isLooping)}
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '8px',
+              padding: '0.5rem 0.75rem',
+              color: isLooping ? 'var(--primary-color)' : 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              transition: 'all 0.2s'
+            }}
+          >
+            <Repeat size={16} />
+            {isLooping ? 'Repetição: ON' : 'Repetição: OFF'}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
