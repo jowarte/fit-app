@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Users, Search, Plus, Trash2, Edit2, ShieldAlert, Check, X, ShieldCheck, UserX, Clock, CreditCard } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { DEFAULT_PLANS } from '../../lib/permissions';
 
 export function AdminClients() {
+  const { isSuperAdmin } = useOutletContext() || { isSuperAdmin: false };
   const [clients, setClients] = useState([]);
   const [plans, setPlans] = useState(DEFAULT_PLANS);
   const [loading, setLoading] = useState(true);
@@ -358,13 +360,15 @@ export function AdminClients() {
                         >
                           <Edit2 size={16} />
                         </button>
-                        <button 
-                          onClick={() => handleDelete(client.id, client.email)}
-                          style={{ background: 'rgba(239, 68, 68, 0.05)', border: 'none', cursor: 'pointer', padding: '0.5rem', borderRadius: '4px', color: '#ef4444', display: 'flex', alignItems: 'center' }}
-                          title="Excluir cliente"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        {isSuperAdmin && (
+                          <button 
+                            onClick={() => handleDelete(client.id, client.email)}
+                            style={{ background: 'rgba(239, 68, 68, 0.05)', border: 'none', cursor: 'pointer', padding: '0.5rem', borderRadius: '4px', color: '#ef4444', display: 'flex', alignItems: 'center' }}
+                            title="Excluir cliente"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

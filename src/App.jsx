@@ -16,6 +16,7 @@ import { AdminWhatsApp } from './pages/admin/AdminWhatsApp';
 import { AdminSalesLink } from './pages/admin/AdminSalesLink';
 import { AdminClients } from './pages/admin/AdminClients';
 import { AdminNotifications } from './pages/admin/AdminNotifications';
+import { AdminTeam } from './pages/admin/AdminTeam';
 import { ConfigPage } from './pages/ConfigPage';
 import { SalesPage } from './pages/SalesPage';
 import { ConquistasPage } from './pages/ConquistasPage';
@@ -671,6 +672,7 @@ function App() {
               <Route path="whatsapp" element={<AdminWhatsApp />} />
               <Route path="clients" element={<AdminClients />} />
               <Route path="notifications" element={<AdminNotifications />} />
+              <Route path="team" element={<AdminTeam />} />
             </Route>
           </Routes>
         </main>

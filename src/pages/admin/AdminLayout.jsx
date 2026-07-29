@@ -1,80 +1,79 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Dumbbell, Users, Settings, MessageCircle, CreditCard, ShoppingCart, Bell, Lock } from 'lucide-react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Dumbbell, Users, Settings, MessageCircle, CreditCard, ShoppingCart, Bell, Lock, ShieldAlert } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 export function AdminLayout() {
   const location = useLocation();
   const path = location.pathname;
+  const navigate = useNavigate();
   
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
+  const [userRole, setUserRole] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const adminAuth = localStorage.getItem('adminAuth');
-    if (adminAuth === 'true') {
-      setIsAuthenticated(true);
-    }
-  }, []);
+    checkUser();
+  }, [location.pathname]);
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (username === 'admin' && password === 'admin123') {
-      localStorage.setItem('adminAuth', 'true');
-      setIsAuthenticated(true);
-      setError('');
-    } else {
-      setError('Usuário ou senha incorretos.');
+  async function checkUser() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setIsAuthenticated(false);
+        setLoading(false);
+        return;
+      }
+      
+      const { data: profile, error } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+      
+      if (profile && (profile.role === 'admin' || profile.role === 'super_admin')) {
+        setIsAuthenticated(true);
+        setUserRole(profile.role);
+        setError('');
+      } else {
+        setIsAuthenticated(false);
+        setError('Sua conta não tem privilégios de administrador.');
+      }
+    } catch (err) {
+      console.error(err);
+      setIsAuthenticated(false);
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminAuth');
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setIsAuthenticated(false);
+    setUserRole(null);
+    navigate('/login');
   };
+
+  if (loading) {
+    return <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-dark)', alignItems: 'center', justifyContent: 'center' }}>Carregando...</div>;
+  }
 
   if (!isAuthenticated) {
     return (
       <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-dark)', alignItems: 'center', justifyContent: 'center' }}>
-        <form onSubmit={handleLogin} className="glass-card" style={{ padding: '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '400px' }}>
-          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-            <Lock size={48} color="var(--primary-color)" style={{ marginBottom: '1rem' }} />
-            <h2 style={{ margin: 0 }}>Acesso Restrito</h2>
-            <p style={{ color: 'var(--text-secondary)' }}>Faça login para acessar o painel</p>
-          </div>
+        <div className="glass-card" style={{ padding: '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '400px', textAlign: 'center' }}>
+          <Lock size={48} color="var(--primary-color)" style={{ margin: '0 auto 1rem auto' }} />
+          <h2 style={{ margin: 0 }}>Acesso Restrito</h2>
+          <p style={{ color: 'var(--text-secondary)' }}>Faça login com uma conta de administrador para acessar o painel.</p>
           
-          {error && <div style={{ background: 'rgba(255,68,68,0.1)', color: '#ff4444', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>{error}</div>}
+          {error && <div style={{ background: 'rgba(255,68,68,0.1)', color: '#ff4444', padding: '1rem', borderRadius: '8px' }}>{error}</div>}
           
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Usuário</label>
-            <input 
-              type="text" 
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              style={{ width: '100%', padding: '1rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
-              required
-            />
-          </div>
-          
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Senha</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '1rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
-              required
-            />
-          </div>
-          
-          <button type="submit" className="btn btn-primary" style={{ padding: '1rem', marginTop: '1rem', fontSize: '1.1rem' }}>
-            Entrar
+          <button onClick={() => navigate('/login')} className="btn btn-primary" style={{ padding: '1rem', marginTop: '1rem', fontSize: '1.1rem' }}>
+            Ir para a página de Login
           </button>
-        </form>
+        </div>
       </div>
     );
   }
+
+  const isSuperAdmin = userRole === 'super_admin';
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-color)' }}>
@@ -88,8 +87,11 @@ export function AdminLayout() {
         flexDirection: 'column',
         gap: '1rem'
       }}>
-        <div style={{ padding: '0 1rem', marginBottom: '2rem' }}>
-          <h2 style={{ fontSize: '1.2rem', color: 'var(--primary-color)' }}>Admin Panel</h2>
+        <div style={{ padding: '0 1rem', marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <h2 style={{ fontSize: '1.2rem', color: 'var(--primary-color)', margin: 0 }}>Admin Panel</h2>
+          <span style={{ fontSize: '0.8rem', background: isSuperAdmin ? '#ffc107' : 'rgba(255,255,255,0.1)', color: isSuperAdmin ? 'black' : 'white', padding: '0.2rem 0.6rem', borderRadius: '12px', width: 'fit-content', fontWeight: 'bold' }}>
+            {isSuperAdmin ? 'SUPER ADMIN' : 'ADMIN'}
+          </span>
         </div>
 
         <Link 
@@ -156,37 +158,58 @@ export function AdminLayout() {
           <span>Planos</span>
         </Link>
         
-        <Link 
-          to="/admin/sales"
-          style={{
-            display: 'flex', alignItems: 'center', gap: '0.75rem',
-            padding: '0.75rem 1rem',
-            borderRadius: '8px',
-            textDecoration: 'none',
-            color: path === '/admin/sales' ? 'var(--bg-color)' : 'var(--text-color)',
-            background: path === '/admin/sales' ? '#ff4444' : 'transparent',
-            transition: 'all 0.2s'
-          }}
-        >
-          <ShoppingCart size={20} />
-          <span style={{ color: path === '/admin/sales' ? 'white' : 'var(--text-color)' }}>Página de Vendas</span>
-        </Link>
-        
-        <Link 
-          to="/admin/settings"
-          style={{
-            display: 'flex', alignItems: 'center', gap: '0.75rem',
-            padding: '0.75rem 1rem',
-            borderRadius: '8px',
-            textDecoration: 'none',
-            color: path === '/admin/settings' ? 'var(--bg-color)' : 'var(--text-color)',
-            background: path === '/admin/settings' ? 'var(--primary-color)' : 'transparent',
-            transition: 'all 0.2s'
-          }}
-        >
-          <Settings size={20} />
-          <span>Configurações</span>
-        </Link>
+        {/* Funcionalidades de Vendas e Configurações Ocultadas para Admin Comum */}
+        {isSuperAdmin && (
+          <>
+            <Link 
+              to="/admin/sales"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                color: path === '/admin/sales' ? 'var(--bg-color)' : 'var(--text-color)',
+                background: path === '/admin/sales' ? '#ff4444' : 'transparent',
+                transition: 'all 0.2s'
+              }}
+            >
+              <ShoppingCart size={20} />
+              <span style={{ color: path === '/admin/sales' ? 'white' : 'var(--text-color)' }}>Página de Vendas</span>
+            </Link>
+            
+            <Link 
+              to="/admin/settings"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                color: path === '/admin/settings' ? 'var(--bg-color)' : 'var(--text-color)',
+                background: path === '/admin/settings' ? 'var(--primary-color)' : 'transparent',
+                transition: 'all 0.2s'
+              }}
+            >
+              <Settings size={20} />
+              <span>Configurações</span>
+            </Link>
+
+            <Link 
+              to="/admin/team"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                color: path === '/admin/team' ? 'var(--bg-color)' : 'var(--text-color)',
+                background: path === '/admin/team' ? '#ffc107' : 'transparent',
+                transition: 'all 0.2s'
+              }}
+            >
+              <ShieldAlert size={20} />
+              <span style={{ color: path === '/admin/team' ? 'black' : 'var(--text-color)' }}>Gerenciar Equipe</span>
+            </Link>
+          </>
+        )}
         
         <Link 
           to="/admin/notifications"
@@ -235,13 +258,13 @@ export function AdminLayout() {
             textAlign: 'left'
           }}
         >
-          Sair do Admin
+          Sair da Conta Admin
         </button>
       </aside>
 
       {/* Main Content Area */}
       <main style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
-        <Outlet />
+        <Outlet context={{ isSuperAdmin }} />
       </main>
     </div>
   );
