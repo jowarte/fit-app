@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Save, Trash2, Video, Dumbbell, Search, Folder, LayoutGrid, X, Library, ArrowLeft, Check } from 'lucide-react';
+import { Plus, Save, Trash2, Video, Dumbbell, Search, Folder, LayoutGrid, X, Library, ArrowLeft, Check, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { VideoPlayer } from '../components/VideoPlayer';
+import { checkUserPermission, applySimulator } from '../lib/permissions';
 
 export function WorkoutBuilder() {
   const navigate = useNavigate();
@@ -15,6 +16,9 @@ export function WorkoutBuilder() {
     { id: Date.now(), name: '', sets: 3, reps: '10', media_url: '', media_type: 'youtube' }
   ]);
 
+  const [userProfile, setUserProfile] = useState(null);
+  const [checkingAccess, setCheckingAccess] = useState(true);
+
   // Modal states
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [targetExerciseId, setTargetExerciseId] = useState(null);
@@ -25,7 +29,21 @@ export function WorkoutBuilder() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    async function fetchLibrary() {
+    async function checkAccessAndFetchLibrary() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          const { data, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+          if (!error && data) {
+            setUserProfile(applySimulator(data));
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setCheckingAccess(false);
+      }
+
       setLibraryLoading(true);
       const { data, error } = await supabase.from('exercises').select('*').order('name');
       if (!error && data) {
@@ -33,10 +51,8 @@ export function WorkoutBuilder() {
       }
       setLibraryLoading(false);
     }
-    if (isLibraryOpen && libraryExercises.length === 0) {
-      fetchLibrary();
-    }
-  }, [isLibraryOpen]);
+    checkAccessAndFetchLibrary();
+  }, []);
 
   const openLibrary = (id) => {
     setTargetExerciseId(id);
@@ -155,6 +171,48 @@ export function WorkoutBuilder() {
       setIsSaving(false);
     }
   };
+
+  if (checkingAccess) {
+    return (
+      <div className="container" style={{ paddingTop: '5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+        Verificando permissões...
+      </div>
+    );
+  }
+
+  const hasCreateAccess = checkUserPermission(userProfile, 'access_create');
+
+  if (!hasCreateAccess) {
+    return (
+      <div className="container animate-fade-in" style={{ paddingTop: '5rem', paddingBottom: '6rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div className="glass-card" style={{ width: '100%', maxWidth: '450px', padding: '2.5rem', textAlign: 'center', border: '1px solid rgba(255, 176, 32, 0.2)' }}>
+          <Lock size={56} color="#ffb020" style={{ marginBottom: '1.5rem', marginLeft: 'auto', marginRight: 'auto' }} />
+          <h2 style={{ marginBottom: '1rem', color: 'white' }}>
+            {userProfile?.status === 'trial' ? 'Recurso Bloqueado no Teste' : 'Criação de Treinos Exclusiva'}
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2rem' }}>
+            {userProfile?.status === 'trial' 
+              ? 'A criação de treinos personalizados não está disponível no seu período de teste. Assine um plano completo para liberar!' 
+              : 'A criação de treinos personalizados é um recurso Premium. Escolha um plano de assinatura para liberar essa e outras funções!'}
+          </p>
+          <button 
+            className="btn btn-primary" 
+            onClick={() => navigate('/planos')}
+            style={{ width: '100%', marginBottom: '1rem' }}
+          >
+            Assinar Agora
+          </button>
+          <button 
+            className="btn" 
+            onClick={() => navigate('/')}
+            style={{ width: '100%', background: 'rgba(255, 255, 255, 0.05)', color: 'white' }}
+          >
+            Voltar ao Início
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container animate-fade-in" style={{ paddingTop: '2rem', paddingBottom: '6rem' }}>
