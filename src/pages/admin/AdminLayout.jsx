@@ -1,10 +1,80 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Dumbbell, Users, Settings, MessageCircle, CreditCard, ShoppingCart, Bell } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, Users, Settings, MessageCircle, CreditCard, ShoppingCart, Bell, Lock } from 'lucide-react';
 
 export function AdminLayout() {
   const location = useLocation();
   const path = location.pathname;
+  
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const adminAuth = localStorage.getItem('adminAuth');
+    if (adminAuth === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (username === 'admin' && password === 'admin123') {
+      localStorage.setItem('adminAuth', 'true');
+      setIsAuthenticated(true);
+      setError('');
+    } else {
+      setError('Usuário ou senha incorretos.');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('adminAuth');
+    setIsAuthenticated(false);
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-dark)', alignItems: 'center', justifyContent: 'center' }}>
+        <form onSubmit={handleLogin} className="glass-card" style={{ padding: '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '400px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+            <Lock size={48} color="var(--primary-color)" style={{ marginBottom: '1rem' }} />
+            <h2 style={{ margin: 0 }}>Acesso Restrito</h2>
+            <p style={{ color: 'var(--text-secondary)' }}>Faça login para acessar o painel</p>
+          </div>
+          
+          {error && <div style={{ background: 'rgba(255,68,68,0.1)', color: '#ff4444', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>{error}</div>}
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Usuário</label>
+            <input 
+              type="text" 
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              style={{ width: '100%', padding: '1rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+              required
+            />
+          </div>
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Senha</label>
+            <input 
+              type="password" 
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              style={{ width: '100%', padding: '1rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+              required
+            />
+          </div>
+          
+          <button type="submit" className="btn btn-primary" style={{ padding: '1rem', marginTop: '1rem', fontSize: '1.1rem' }}>
+            Entrar
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-color)' }}>
@@ -150,20 +220,23 @@ export function AdminLayout() {
           <span style={{ color: path === '/admin/whatsapp' ? 'white' : 'var(--text-color)' }}>Lembretes WhatsApp</span>
         </Link>
         
-        <Link 
-          to="/"
+        <button 
+          onClick={handleLogout}
           style={{
             display: 'flex', alignItems: 'center', gap: '0.75rem',
             padding: '0.75rem 1rem',
             borderRadius: '8px',
-            textDecoration: 'none',
-            color: 'var(--text-secondary)',
+            border: 'none',
+            background: 'transparent',
+            color: '#ff4444',
             marginTop: 'auto',
-            transition: 'all 0.2s'
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            textAlign: 'left'
           }}
         >
-          <span>Sair do Admin</span>
-        </Link>
+          Sair do Admin
+        </button>
       </aside>
 
       {/* Main Content Area */}
