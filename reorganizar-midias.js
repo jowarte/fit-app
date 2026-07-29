@@ -26,31 +26,6 @@ function getMediaType(ext) {
     return null;
 }
 
-async function insertMedia(name, categoryName, targetGender, mediaType, filePath, folder, subfolder = '') {
-  let relativePath = subfolder ? `${folder}/${subfolder}/${filePath}` : `${folder}/${filePath}`;
-  const mediaUrl = `${publicBaseUrl}/${relativePath}`;
-  
-  // A pasta real na UI (muscle_group) será "Categoria Gênero", ex: "Abdominal Homem"
-  const muscleGroup = `${categoryName} ${targetGender}`;
-  
-  const { error } = await supabase
-    .from('exercises')
-    .insert([{
-      name: name,
-      muscle_group: muscleGroup,
-      media_type: mediaType,
-      media_url: mediaUrl,
-      target_gender: targetGender,
-      description: ''
-    }]);
-
-  if (error) {
-    console.error(`Erro ao inserir ${name}:`, error.message);
-    return false;
-  }
-  return true;
-}
-
 async function main() {
   try {
     console.log("Limpando exercícios existentes para evitar duplicados...");
@@ -65,9 +40,9 @@ async function main() {
       .filter(dirent => dirent.isDirectory())
       .map(dirent => dirent.name);
     
-    console.log(`Encontradas ${folders.length} pastas principais. Iniciando importação...`);
+    console.log(`Encontradas ${folders.length} pastas principais. Coletando dados...`);
 
-    let totalInserted = 0;
+    const recordsToInsert = [];
 
     for (const folder of folders) {
       const folderPath = path.join(baseFolder, folder);
@@ -75,15 +50,12 @@ async function main() {
       
       const lowerFolder = folder.toLowerCase();
       
-      // Checa se o nome da pasta mãe já define o gênero
       let explicitGender = null;
       if (lowerFolder.includes('mulher')) {
           explicitGender = 'Mulher';
       } else if (lowerFolder.includes('homem')) {
           explicitGender = 'Homem';
       }
-
-      console.log(`\nAnalisando pasta: ${folder} (Categoria Base: ${cleanName})`);
 
       const items = fs.readdirSync(folderPath, { withFileTypes: true });
       
@@ -96,14 +68,18 @@ async function main() {
               let name = path.basename(item.name, ext);
               name = name.charAt(0).toUpperCase() + name.slice(1);
 
-              // Arquivos na raiz da pasta: se a pasta não definir gênero, assumimos Homem
               const gender = explicitGender || 'Homem';
               
-              const success = await insertMedia(name, cleanName, gender, mediaType, item.name, folder);
-              if (success) totalInserted++;
+              recordsToInsert.push({
+                  name: name,
+                  muscle_group: `${cleanName} ${gender}`,
+                  media_type: mediaType,
+                  media_url: `${publicBaseUrl}/${folder}/${item.name}`,
+                  target_gender: gender,
+                  description: ''
+              });
 
           } else if (item.isDirectory() && item.name.toLowerCase() === 'mulher') {
-              // Subpasta "mulher" encontrada
               const subfolderPath = path.join(folderPath, item.name);
               const subItems = fs.readdirSync(subfolderPath, { withFileTypes: true });
               
@@ -116,15 +92,38 @@ async function main() {
                       let name = path.basename(subItem.name, ext);
                       name = name.charAt(0).toUpperCase() + name.slice(1);
 
-                      const success = await insertMedia(name, cleanName, 'Mulher', mediaType, subItem.name, folder, item.name);
-                      if (success) totalInserted++;
+                      recordsToInsert.push({
+                          name: name,
+                          muscle_group: `${cleanName} Mulher`,
+                          media_type: mediaType,
+                          media_url: `${publicBaseUrl}/${folder}/${item.name}/${subItem.name}`,
+                          target_gender: 'Mulher',
+                          description: ''
+                      });
                   }
               }
           }
       }
     }
     
-    console.log(`\nProcesso concluído! ${totalInserted} novos exercícios importados e divididos por Homem e Mulher.`);
+    console.log(`Total de ${recordsToInsert.length} arquivos prontos para inserção.`);
+    console.log("Iniciando inserção em lote...");
+    
+    const chunkSize = 500;
+    let totalInserted = 0;
+    for (let i = 0; i < recordsToInsert.length; i += chunkSize) {
+      const chunk = recordsToInsert.slice(i, i + chunkSize);
+      const { error: insertError } = await supabase.from('exercises').insert(chunk);
+      
+      if (insertError) {
+        console.error("Erro ao inserir lote:", insertError);
+      } else {
+        totalInserted += chunk.length;
+        console.log(`Inseridos ${totalInserted}/${recordsToInsert.length}...`);
+      }
+    }
+    
+    console.log(`\nProcesso concluído com SUCESSO! ${totalInserted} exercícios cadastrados.`);
   } catch (err) {
     console.error('Erro no script:', err);
   }

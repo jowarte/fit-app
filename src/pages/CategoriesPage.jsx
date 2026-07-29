@@ -21,9 +21,21 @@ export function CategoriesPage() {
 
   useEffect(() => {
     async function fetchExercisesAndProfile() {
-      const { data: exercisesData, error: exercisesError } = await supabase.from('exercises').select('*').order('name');
-      if (!exercisesError) {
-        setExercises(exercisesData || []);
+      try {
+        let allData = [];
+        let from = 0;
+        const step = 1000;
+        while (true) {
+          const { data, error } = await supabase.from('exercises').select('*').order('name').range(from, from + step - 1);
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+          allData = allData.concat(data);
+          from += step;
+          if (data.length < step) break;
+        }
+        setExercises(allData);
+      } catch (err) {
+        console.error('Error fetching exercises', err);
       }
 
       // Buscar Sessão e Perfil
