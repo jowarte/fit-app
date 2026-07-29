@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Dumbbell, Home, Trophy, Settings, Play, Plus, Activity, Check, Copy, X } from 'lucide-react';
+import { Dumbbell, Home, Trophy, Settings, Play, Plus, Activity, Check, Copy, X, MessageCircle } from 'lucide-react';
 import { VideoPlayer } from './components/VideoPlayer';
 import { RestTimer } from './components/RestTimer';
 import { WorkoutBuilder } from './pages/WorkoutBuilder';
@@ -51,8 +51,8 @@ function Navbar() {
         <span>Conquistas</span>
       </Link>
       <Link to="/config" className={`nav-item ${path === '/config' ? 'active' : ''}`}>
-        <Settings size={24} />
-        <span>Config</span>
+        <MessageCircle size={24} color="#25D366" />
+        <span style={{ color: path === '/config' ? '#25D366' : 'inherit' }}>Lembretes</span>
       </Link>
     </nav>
   );
