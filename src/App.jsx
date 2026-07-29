@@ -25,6 +25,7 @@ import { processWorkoutCompletion } from './lib/gamification';
 import { OnboardingModal } from './components/OnboardingModal';
 import { applySimulator } from './lib/permissions';
 import { NotificationCenter } from './components/NotificationCenter';
+import { InstallPrompt } from './components/InstallPrompt';
 import './App.css'; // Limpar o App.css se existir, usando apenas index.css
 
 function Navbar() {
@@ -678,6 +679,7 @@ function App() {
         </main>
         <NotificationCenter />
         <Navbar />
+        <InstallPrompt />
         {localStorage.getItem('simulated_plan_id') && (
           <button 
             onClick={() => { localStorage.removeItem('simulated_plan_id'); window.location.href = '/admin/plans'; }}
