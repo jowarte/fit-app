@@ -633,7 +633,7 @@ function App() {
               </p>
               <button 
                 className="btn btn-primary" 
-                onClick={() => navigate('/planos')}
+                onClick={() => window.location.href = '/planos'}
                 style={{ width: '100%', marginBottom: '1rem' }}
               >
                 Ver Planos de Assinatura
