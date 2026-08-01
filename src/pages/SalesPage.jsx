@@ -7,9 +7,17 @@ export function SalesPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     const saved = localStorage.getItem('admin_plans');
     if (saved) {
-      setPlans(JSON.parse(saved));
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setPlans(parsed);
+        }
+      } catch (e) {
+        console.error('Erro ao ler admin_plans:', e);
+      }
     }
   }, []);
 
@@ -134,12 +142,12 @@ export function SalesPage() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 10 }}>
-          {plans.filter(plan => plan.isVisible !== false).length === 0 ? (
+          {Array.isArray(plans) && plans.filter(plan => plan && plan.isVisible !== false).length === 0 ? (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-secondary)', padding: '4rem', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
               Nenhum plano disponível no momento.
             </div>
           ) : (
-            plans.filter(plan => plan.isVisible !== false).map((plan) => (
+            Array.isArray(plans) && plans.filter(plan => plan && plan.isVisible !== false).map((plan) => (
               <div key={plan.id} className="glass-card plan-card" style={{ 
                 position: 'relative', 
                 display: 'flex', flexDirection: 'column', height: '100%',
@@ -158,7 +166,7 @@ export function SalesPage() {
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'baseline', marginBottom: '2.5rem', paddingBottom: '2.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                   <span style={{ fontSize: '1.2rem', alignSelf: 'flex-start', marginTop: '8px', color: 'var(--text-secondary)' }}>R$</span>
                   <span style={{ fontSize: '4rem', fontWeight: '900', color: plan.price === '0' || plan.price === '0,00' ? 'white' : 'var(--primary-color)', lineHeight: 1, letterSpacing: '-1px' }}>{plan.price}</span>
-                  <span style={{ color: 'var(--text-secondary)', marginLeft: '5px' }}>/{plan.cycle.toLowerCase()}</span>
+                  <span style={{ color: 'var(--text-secondary)', marginLeft: '5px' }}>/{plan.cycle?.toLowerCase() || 'mensal'}</span>
                 </div>
 
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.2rem', marginBottom: '3rem' }}>
@@ -189,7 +197,7 @@ export function SalesPage() {
                   )}
 
                   {/* Benefícios Customizados (filtrando duplicatas legadas) */}
-                  {plan.features && plan.features
+                  {Array.isArray(plan.features) && plan.features
                     .filter(feat => !['Acesso ao Treino em Casa', 'Acesso ao Treino na Academia', 'Criar Treinos Personalizados', 'Lembretes via WhatsApp', 'Diário de Treino Básico', 'Acesso Total (Casa e Academia)', 'Criação ilimitada de treinos', 'Lembretes automáticos via WhatsApp'].includes(feat))
                     .map((feat, idx) => (
                     <div key={`custom-${idx}`} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>

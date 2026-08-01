@@ -192,7 +192,18 @@ export function CategoriesPage() {
 
             const meta = folderMetas.find(m => m.muscle_group === cat);
             const isHome = cat === 'Treino em Casa';
-            const isLocked = isHome ? !checkUserPermission(userProfile, 'access_home') : !checkUserPermission(userProfile, 'access_gym');
+            const isAdvanced = cat === 'Treino Avançado';
+            let hasCatAccess = false;
+            if (isHome) hasCatAccess = checkUserPermission(userProfile, 'access_home');
+            else if (isAdvanced) hasCatAccess = checkUserPermission(userProfile, 'access_advanced');
+            else hasCatAccess = checkUserPermission(userProfile, 'access_gym');
+            
+            const isPremiumUser = userProfile?.is_premium === true || userProfile?.role === 'super_admin' || userProfile?.role === 'admin';
+            let isLocked = !hasCatAccess;
+            if (meta?.is_premium && !isPremiumUser) {
+              if (isAdvanced && hasCatAccess) isLocked = false;
+              else isLocked = true;
+            }
             
             return (
               <div 
@@ -292,10 +303,23 @@ export function CategoriesPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         {categoryExercises.map(ex => {
           const isHome = selectedCategory === 'Treino em Casa';
-          const hasCategoryAccess = isHome ? checkUserPermission(userProfile, 'access_home') : checkUserPermission(userProfile, 'access_gym');
-          const isPremiumUser = userProfile?.is_premium === true;
-          // Se o exercício é premium OU se a pasta inteira é premium OU se o usuário não tem acesso à categoria
-          const isLocked = !hasCategoryAccess || ((ex.is_premium || catMeta?.is_premium) && !isPremiumUser); 
+          const isAdvanced = selectedCategory === 'Treino Avançado';
+          
+          let hasCategoryAccess = false;
+          if (isHome) hasCategoryAccess = checkUserPermission(userProfile, 'access_home');
+          else if (isAdvanced) hasCategoryAccess = checkUserPermission(userProfile, 'access_advanced');
+          else hasCategoryAccess = checkUserPermission(userProfile, 'access_gym');
+          
+          const isPremiumUser = userProfile?.is_premium === true || userProfile?.role === 'super_admin' || userProfile?.role === 'admin';
+          
+          let isLocked = !hasCategoryAccess;
+          if ((ex.is_premium || catMeta?.is_premium) && !isPremiumUser) {
+             if (isAdvanced && hasCategoryAccess) {
+                isLocked = false;
+             } else {
+                isLocked = true;
+             }
+          } 
           
           return (
             <div key={ex.id} className="glass-card" style={{ padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>

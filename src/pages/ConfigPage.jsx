@@ -1,15 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Bell, MessageCircle, Phone, CheckCircle2, AlertCircle, CreditCard } from 'lucide-react';
-import { supabase } from '../lib/supabase'; // Para uso futuro quando houver login
+import { useNavigate } from 'react-router-dom';
+import { Settings, Bell, MessageCircle, Phone, CheckCircle2, AlertCircle, CreditCard, Plus, Clock, CalendarDays, Trash2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { checkUserPermission, DEFAULT_PLANS, applySimulator } from '../lib/permissions';
 
 export function ConfigPage() {
+  const navigate = useNavigate();
   const [whatsappEnabled, setWhatsappEnabled] = useState(false);
   const [userPhone, setUserPhone] = useState('');
   const [adminPhone, setAdminPhone] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [plans, setPlans] = useState([]);
+  const [activationMessage, setActivationMessage] = useState('Olá! Sou aluno e quero ativar meus lembretes de treino neste número.');
+  
+  // Reminders state
+  const [myReminders, setMyReminders] = useState([]);
+  const [showAddReminder, setShowAddReminder] = useState(false);
+  const [newReminder, setNewReminder] = useState({
+    title: 'Meu Treino',
+    dayOfWeek: 'Segunda-feira',
+    time: '18:00',
+    message: 'Oi! Não esqueça do seu treino de hoje! 💪'
+  });
 
   useEffect(() => {
     // Carregar configurações salvas
@@ -34,14 +47,24 @@ export function ConfigPage() {
           const { data, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
           if (!error && data) {
             setUserProfile(applySimulator(data));
+            
+            // Set WhatsApp configs from DB
+            setWhatsappEnabled(data.wa_enabled || false);
+            if (data.wa_phone) setUserPhone(data.wa_phone);
+
             // Se o usuário perdeu acesso premium e o WhatsApp estava ativo, desliga
             const hasWaAccess = checkUserPermission(data, 'access_whatsapp');
-            if (!hasWaAccess && savedStatus === 'true') {
+            if (!hasWaAccess && data.wa_enabled) {
               setWhatsappEnabled(false);
-              localStorage.setItem('user_wa_enabled', 'false');
+              await supabase.from('profiles').update({ wa_enabled: false }).eq('id', session.user.id);
             }
+
+            // Load user reminders
+            const { data: rems } = await supabase.from('whatsapp_reminders').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false });
+            if (rems) setMyReminders(rems);
           }
         }
+
       } catch (e) {
         console.error(e);
       }
@@ -59,30 +82,54 @@ export function ConfigPage() {
       savedPlans = DEFAULT_PLANS;
     }
     setPlans(savedPlans);
+    
+    async function loadAdminPhone() {
+      const { data } = await supabase.from('app_settings').select('whatsapp_bot_number, whatsapp_activation_message').eq('id', 1).single();
+      if (data) {
+        if (data.whatsapp_bot_number) setAdminPhone(data.whatsapp_bot_number);
+        if (data.whatsapp_activation_message) setActivationMessage(data.whatsapp_activation_message);
+      } else {
+        setAdminPhone('5511999999999');
+      }
+    }
+    loadAdminPhone();
   }, []);
 
-  const handleToggle = () => {
+  const handleToggle = async () => {
     const hasWhatsappAccess = checkUserPermission(userProfile, 'access_whatsapp');
     if (!hasWhatsappAccess) {
-      if (userProfile?.status === 'trial') {
-        alert("A ativação de lembretes automáticos no WhatsApp não está inclusa no seu período de teste. Assine um plano completo para habilitar!");
-      } else {
-        alert("A ativação de lembretes automáticos no WhatsApp é um recurso Premium. Escolha um plano de assinatura para habilitar.");
-      }
+      // DEBUG temporário - remover depois
+      const debugInfo = {
+        status: userProfile?.status,
+        plan_id: userProfile?.plan_id,
+        is_premium: userProfile?.is_premium,
+        access_whatsapp_override: userProfile?.access_whatsapp_override,
+        trial_ends_at: userProfile?.trial_ends_at,
+        now: new Date().toISOString(),
+        expired: userProfile?.trial_ends_at ? new Date() > new Date(userProfile.trial_ends_at) : 'sem data',
+        simPlanId: localStorage.getItem('simulated_plan_id'),
+        plansCount: plans.length
+      };
+      alert('DEBUG - Bloqueado! Dados:\n' + JSON.stringify(debugInfo, null, 2));
       return;
     }
 
     const newValue = !whatsappEnabled;
     setWhatsappEnabled(newValue);
-    localStorage.setItem('user_wa_enabled', newValue);
+    
+    if (userProfile?.id) {
+      await supabase.from('profiles').update({ wa_enabled: newValue }).eq('id', userProfile.id);
+    }
   };
 
-  const handlePhoneChange = (e) => {
-    setUserPhone(e.target.value);
-    localStorage.setItem('user_wa_phone', e.target.value);
-    // Se mudou o número, precisa reconectar
+  const handlePhoneChange = async (e) => {
+    const newPhone = e.target.value;
+    setUserPhone(newPhone);
     setIsConnected(false);
-    localStorage.setItem('user_wa_connected', 'false');
+    
+    if (userProfile?.id) {
+      await supabase.from('profiles').update({ wa_phone: newPhone }).eq('id', userProfile.id);
+    }
   };
 
   const handleConnect = () => {
@@ -92,14 +139,47 @@ export function ConfigPage() {
     }
     
     setIsConnected(true);
-    localStorage.setItem('user_wa_connected', 'true');
     
     // Limpar caracteres especiais do número do Admin
     const cleanAdminNum = adminPhone.replace(/\D/g, '');
-    const message = encodeURIComponent("Olá! Sou aluno e quero ativar meus lembretes de treino neste número.");
+    const message = encodeURIComponent(activationMessage);
     
     const url = `https://wa.me/${cleanAdminNum}?text=${message}`;
     window.open(url, '_blank');
+  };
+
+  const handleSaveReminder = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        user_id: userProfile.id,
+        title: newReminder.title,
+        day_of_week: newReminder.dayOfWeek,
+        time: newReminder.time,
+        message: newReminder.message,
+        active: true
+      };
+      const { data, error } = await supabase.from('whatsapp_reminders').insert([payload]).select().single();
+      if (error) throw error;
+      if (data) {
+        setMyReminders([data, ...myReminders]);
+        setShowAddReminder(false);
+      }
+    } catch (err) {
+      alert('Erro ao salvar lembrete: ' + err.message);
+    }
+  };
+
+  const handleDeleteReminder = async (id) => {
+    if (window.confirm('Tem certeza que deseja excluir este horário?')) {
+      await supabase.from('whatsapp_reminders').delete().eq('id', id);
+      setMyReminders(myReminders.filter(r => r.id !== id));
+    }
+  };
+
+  const toggleReminderActive = async (id, currentStatus) => {
+    await supabase.from('whatsapp_reminders').update({ active: !currentStatus }).eq('id', id);
+    setMyReminders(myReminders.map(r => r.id === id ? { ...r, active: !currentStatus } : r));
   };
 
   return (
@@ -185,6 +265,102 @@ export function ConfigPage() {
                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
                   Se você enviou a mensagem com sucesso, seu WhatsApp já está habilitado para receber os lembretes de treino.
                 </p>
+              </div>
+            )}
+            
+            {isConnected && (
+              <div style={{ marginTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h4 style={{ margin: 0, color: 'white' }}>Meus Horários</h4>
+                  {!showAddReminder && (
+                    <button onClick={() => setShowAddReminder(true)} style={{ background: 'none', border: 'none', color: '#25D366', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                      <Plus size={16} /> Adicionar
+                    </button>
+                  )}
+                </div>
+
+                {showAddReminder && (
+                  <form onSubmit={handleSaveReminder} className="animate-scale" style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '1.5rem' }}>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Identificação</label>
+                      <input 
+                        type="text" required
+                        value={newReminder.title} onChange={e => setNewReminder({...newReminder, title: e.target.value})}
+                        style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Dia da Semana</label>
+                        <select 
+                          value={newReminder.dayOfWeek} onChange={e => setNewReminder({...newReminder, dayOfWeek: e.target.value})}
+                          style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}
+                        >
+                          <option>Segunda-feira</option>
+                          <option>Terça-feira</option>
+                          <option>Quarta-feira</option>
+                          <option>Quinta-feira</option>
+                          <option>Sexta-feira</option>
+                          <option>Sábado</option>
+                          <option>Domingo</option>
+                          <option>Todos os dias</option>
+                        </select>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Horário</label>
+                        <input 
+                          type="time" required
+                          value={newReminder.time} onChange={e => setNewReminder({...newReminder, time: e.target.value})}
+                          style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Mensagem Personalizada</label>
+                      <input 
+                        type="text" required
+                        value={newReminder.message} onChange={e => setNewReminder({...newReminder, message: e.target.value})}
+                        style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button type="submit" className="btn" style={{ flex: 1, padding: '0.5rem', background: '#25D366', color: 'white', fontSize: '0.85rem' }}>Salvar</button>
+                      <button type="button" className="btn" onClick={() => setShowAddReminder(false)} style={{ flex: 1, padding: '0.5rem', background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}>Cancelar</button>
+                    </div>
+                  </form>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                  {myReminders.length === 0 ? (
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: 0 }}>Você ainda não criou nenhum horário personalizado. O app também enviará os lembretes gerais configurados pelo seu treinador.</p>
+                  ) : (
+                    myReminders.map(rem => (
+                      <div key={rem.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', opacity: rem.active ? 1 : 0.5 }}>
+                        <div>
+                          <h5 style={{ margin: '0 0 0.3rem 0', color: 'white', fontSize: '0.9rem' }}>{rem.title}</h5>
+                          <div style={{ display: 'flex', gap: '0.8rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><CalendarDays size={12}/> {rem.day_of_week}</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={12}/> {rem.time}</span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                            <input 
+                              type="checkbox" checked={rem.active} onChange={() => toggleReminderActive(rem.id, rem.active)}
+                              style={{ width: '16px', height: '16px', accentColor: '#25D366' }}
+                            />
+                          </label>
+                          <button onClick={() => handleDeleteReminder(rem.id)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '0.2rem' }}>
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             )}
           </div>

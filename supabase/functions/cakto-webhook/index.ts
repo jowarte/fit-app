@@ -18,9 +18,9 @@ serve(async (req) => {
     console.log('Webhook Cakto Recebido:', body)
 
     // Ajuste esses campos dependendo do payload real do Cakto.
-    // Exemplo: O Cakto envia o status da compra e o email do comprador.
     const status = body.event || body.status // ex: 'payment.approved' ou 'approved'
     const customerEmail = body.data?.customer?.email || body.email
+    const productId = body.data?.product?.id || body.product_id || body.product?.id || ''
 
     if (!customerEmail) {
       return new Response(JSON.stringify({ error: 'Email não encontrado no payload' }), { status: 400 })
@@ -43,26 +43,47 @@ serve(async (req) => {
         return new Response(JSON.stringify({ message: 'Usuário não encontrado no app ainda.' }), { status: 200 })
       }
 
-      // 2. Atualiza o Perfil do usuário para is_premium = true
+      // 2. Tenta descobrir qual foi o plano comprado baseado no ID do Produto
+      let targetPlanId = null
+      if (productId) {
+        const { data: plans } = await supabase.from('plans').select('id, webhook_product_id')
+        if (plans) {
+          const matchingPlan = plans.find(p => p.webhook_product_id === String(productId))
+          if (matchingPlan) {
+            targetPlanId = matchingPlan.id
+            console.log(`Produto ${productId} mapeado para o Plano ${targetPlanId}`)
+          }
+        }
+      }
+
+      // 3. Atualiza o Perfil do usuário
+      const updateData: any = { is_premium: true }
+      if (targetPlanId) {
+        updateData.plan_id = targetPlanId
+        // Limpa o status de teste se houver, ativando a assinatura
+        updateData.status = 'active' 
+      }
+
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ is_premium: true })
+        .update(updateData)
         .eq('id', user.id)
 
       if (updateError) throw updateError
 
-      console.log(`Usuário ${customerEmail} ativado como PREMIUM com sucesso!`)
-      return new Response(JSON.stringify({ success: true, message: 'Usuário atualizado para premium' }), { status: 200 })
+      console.log(`Usuário ${customerEmail} ativado com sucesso! Plano: ${targetPlanId || 'Padrão'}`)
+      return new Response(JSON.stringify({ success: true, message: 'Usuário atualizado com sucesso' }), { status: 200 })
     }
 
     // Se o pagamento for recusado ou reembolsado (refunded)
-    if (status === 'payment.refunded' || status === 'refunded' || status === 'chargeback') {
+    if (status === 'payment.refunded' || status === 'refunded' || status === 'chargeback' || status === 'subscription.canceled') {
       const { data: users } = await supabase.auth.admin.listUsers()
       const user = users.users.find(u => u.email === customerEmail)
       if (user) {
-        await supabase.from('profiles').update({ is_premium: false }).eq('id', user.id)
+        // Bloqueia o acesso ou remove o plano
+        await supabase.from('profiles').update({ is_premium: false, plan_id: null, status: 'blocked' }).eq('id', user.id)
       }
-      return new Response(JSON.stringify({ message: 'Acesso Premium removido (Reembolso/Chargeback)' }), { status: 200 })
+      return new Response(JSON.stringify({ message: 'Acesso Premium removido (Reembolso/Cancelamento)' }), { status: 200 })
     }
 
     return new Response(JSON.stringify({ message: 'Evento ignorado (não é pagamento aprovado/reembolsado)' }), { status: 200 })

@@ -30,8 +30,11 @@ export function AdminClients() {
     access_home_override: null, // null = inherit, true = allowed, false = blocked
     access_gym_override: null,
     access_create_override: null,
-    access_whatsapp_override: null
+    access_whatsapp_override: null,
+    password: ''
   });
+
+  const [showPassword, setShowPassword] = useState(false);
 
   // Load plans and clients
   useEffect(() => {
@@ -79,8 +82,10 @@ export function AdminClients() {
       access_home_override: null,
       access_gym_override: null,
       access_create_override: null,
-      access_whatsapp_override: null
+      access_whatsapp_override: null,
+      password: ''
     });
+    setShowPassword(false);
     setIsModalOpen(true);
   };
 
@@ -105,8 +110,10 @@ export function AdminClients() {
       access_home_override: client.access_home_override,
       access_gym_override: client.access_gym_override,
       access_create_override: client.access_create_override,
-      access_whatsapp_override: client.access_whatsapp_override
+      access_whatsapp_override: client.access_whatsapp_override,
+      password: client.password || ''
     });
+    setShowPassword(false);
     setIsModalOpen(true);
   };
 
@@ -163,7 +170,8 @@ export function AdminClients() {
       access_home_override: formData.access_home_override,
       access_gym_override: formData.access_gym_override,
       access_create_override: formData.access_create_override,
-      access_whatsapp_override: formData.access_whatsapp_override
+      access_whatsapp_override: formData.access_whatsapp_override,
+      password: formData.password || null
     };
 
     try {
@@ -385,7 +393,7 @@ export function AdminClients() {
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(0,0,0,0.8)', zIndex: 1100,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '1.5rem', overflowY: 'auto'
+          padding: '1.5rem'
         }}>
           <div className="glass-card" style={{
             width: '100%', maxWidth: '550px', background: 'var(--bg-dark)',
@@ -446,6 +454,42 @@ export function AdminClients() {
                         onChange={e => setFormData({...formData, phone: e.target.value})}
                         style={{ width: '100%', padding: '0.65rem 0.8rem', borderRadius: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.9rem' }}
                       />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
+                      <span>Senha de Acesso</span>
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+                          let pwd = "";
+                          for (let i = 0; i < 8; i++) pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+                          setFormData({...formData, password: pwd});
+                          setShowPassword(true);
+                        }}
+                        style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold' }}
+                      >
+                        Gerar Nova Senha
+                      </button>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder="Digite ou gere uma senha..." 
+                        value={formData.password}
+                        onChange={e => setFormData({...formData, password: e.target.value})}
+                        style={{ width: '100%', padding: '0.65rem 0.8rem', paddingRight: '3rem', borderRadius: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.9rem' }}
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{ position: 'absolute', right: '0.8rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                        title={showPassword ? "Ocultar Senha" : "Ver Senha"}
+                      >
+                        {showPassword ? "Ocultar" : "Ver"}
+                      </button>
                     </div>
                   </div>
                 </div>

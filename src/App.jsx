@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Dumbbell, Home, Trophy, Settings, Play, Plus, Activity, Check, Copy, X, MessageCircle } from 'lucide-react';
+import { Dumbbell, Home, Trophy, Settings, Play, Plus, Activity, Check, Copy, X, MessageCircle, Zap, Clock, User, Folder, ArrowLeft } from 'lucide-react';
 import { VideoPlayer } from './components/VideoPlayer';
 import { RestTimer } from './components/RestTimer';
 import { WorkoutBuilder } from './pages/WorkoutBuilder';
@@ -26,13 +26,17 @@ import { OnboardingModal } from './components/OnboardingModal';
 import { applySimulator } from './lib/permissions';
 import { NotificationCenter } from './components/NotificationCenter';
 import { InstallPrompt } from './components/InstallPrompt';
+import { CatalogPage } from './pages/CatalogPage';
+import { StudentDashboard } from './pages/StudentDashboard';
+import { ActiveWorkoutPage } from './pages/ActiveWorkoutPage';
+import { PokasLayout } from './pages/PokasLayout';
 import './App.css'; // Limpar o App.css se existir, usando apenas index.css
 
 function Navbar() {
   const location = useLocation();
   const path = location.pathname;
 
-  if (path.startsWith('/admin') || path === '/planos' || path === '/login') {
+  if (path.startsWith('/admin') || path === '/planos' || path === '/login' || path.startsWith('/pokas')) {
     return null;
   }
 
@@ -53,6 +57,10 @@ function Navbar() {
       <Link to="/config" className={`nav-item ${path === '/config' ? 'active' : ''}`}>
         <MessageCircle size={24} color="#25D366" />
         <span style={{ color: path === '/config' ? '#25D366' : 'inherit' }}>Lembretes</span>
+      </Link>
+      <Link to="/pokas" className={`nav-item ${path === '/pokas' ? 'active' : ''}`}>
+        <Zap size={24} color="#a855f7" />
+        <span style={{ color: path === '/pokas' ? '#a855f7' : 'inherit', fontSize: '0.65rem' }}>Treino Avançado</span>
       </Link>
     </nav>
   );
@@ -253,7 +261,7 @@ function HomePage() {
   );
 }
 
-import { Folder, ArrowLeft } from 'lucide-react';
+
 
 function TreinosPage() {
   const [routines, setRoutines] = React.useState([]);
@@ -509,6 +517,36 @@ function App() {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
+    async function initPlans() {
+      try {
+        const { data: plans, error } = await supabase.from('plans').select('*');
+        if (!error && plans && plans.length > 0) {
+          const formattedPlans = plans.map(p => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            cycle: p.cycle,
+            checkoutUrl: p.checkout_url,
+            isVisible: p.is_visible,
+            isRecommended: p.is_recommended,
+            isTrial: p.is_trial,
+            trialDays: p.trial_days,
+            features: p.features,
+            accessHome: p.access_home,
+            accessGym: p.access_gym,
+            accessCreate: p.access_create,
+            accessWhatsapp: p.access_whatsapp,
+            accessAdvanced: p.access_advanced,
+            webhook_product_id: p.webhook_product_id
+          }));
+          localStorage.setItem('admin_plans', JSON.stringify(formattedPlans));
+        }
+      } catch (e) {
+        console.error("Failed to init plans", e);
+      }
+    }
+    initPlans();
+
     // 1. Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -655,6 +693,9 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/pokas/*" element={<PokasLayout />} />
+            <Route path="/exercicios" element={<CatalogPage />} />
+            <Route path="/treinar" element={<ActiveWorkoutPage />} />
             <Route path="/treinos" element={<TreinosPage />} />
             <Route path="/categorias" element={<CategoriesPage />} />
             <Route path="/login" element={<AuthPage />} />

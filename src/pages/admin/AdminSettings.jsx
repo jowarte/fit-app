@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save } from 'lucide-react';
+import { Save, Copy, CheckCircle2 } from 'lucide-react';
 
 export function AdminSettings() {
   const [evolutionUrl, setEvolutionUrl] = useState('');
@@ -10,6 +10,15 @@ export function AdminSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
+  const [copied, setCopied] = useState(false);
+  
+  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cakto-webhook`;
+
+  const handleCopyWebhook = () => {
+    navigator.clipboard.writeText(webhookUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     async function fetchSettings() {
@@ -83,6 +92,42 @@ export function AdminSettings() {
             {saving ? 'Salvando...' : 'Salvar Configurações'}
           </button>
         </form>
+      </div>
+
+      <div className="glass-card" style={{ maxWidth: '600px', marginTop: '2rem' }}>
+        <h3 style={{ marginBottom: '1rem', color: 'var(--primary-color)' }}>Recebimento de Vendas (Cakto, Kiwify, etc)</h3>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+          Copie a URL abaixo e cole nas configurações de <b>Webhook</b> da sua plataforma de vendas. Quando uma venda for Aprovada, a plataforma enviará um aviso para este link, e o app criará automaticamente o acesso do aluno!
+        </p>
+
+        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+          Sua URL de Webhook:
+        </label>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <input 
+            type="text" 
+            readOnly
+            value={webhookUrl}
+            style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)', fontSize: '0.85rem' }}
+          />
+          <button 
+            onClick={handleCopyWebhook}
+            className="btn"
+            style={{ 
+              background: copied ? 'rgba(0, 200, 83, 0.2)' : 'rgba(255,255,255,0.1)', 
+              color: copied ? '#00c853' : 'white',
+              border: copied ? '1px solid #00c853' : '1px solid rgba(255,255,255,0.1)',
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+              padding: '0 1rem'
+            }}
+          >
+            {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
+            {copied ? 'Copiado!' : 'Copiar'}
+          </button>
+        </div>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', marginTop: '1rem', fontStyle: 'italic' }}>
+          * Certifique-se de configurar a plataforma para enviar eventos de "Venda Aprovada" / "Assinatura Ativa" para esta URL.
+        </p>
       </div>
     </div>
   );

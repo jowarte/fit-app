@@ -17,6 +17,10 @@ export function checkUserPermission(profile, permissionKey) {
   // Se o usuário estiver bloqueado, ele não tem acesso a nada
   if (profile.status === 'blocked') return false;
 
+  // Super Admins e Admins têm acesso a tudo
+  if (profile.role === 'super_admin' || profile.role === 'admin') return true;
+
+
   // Se o usuário estiver em período de teste (trial), verificar expiração
   if (profile.status === 'trial') {
     if (profile.trial_ends_at) {
@@ -49,6 +53,7 @@ export function checkUserPermission(profile, permissionKey) {
       if (permissionKey === 'access_gym') return !!plan.accessGym;
       if (permissionKey === 'access_create') return !!plan.accessCreate;
       if (permissionKey === 'access_whatsapp') return !!plan.accessWhatsapp;
+      if (permissionKey === 'access_advanced') return !!plan.accessAdvanced;
     }
   }
 
@@ -74,6 +79,7 @@ export function applySimulator(profile) {
 
   const simProfile = { ...profile };
   simProfile.is_admin = false; // To simulate normal user
+  simProfile.role = 'user'; // Override role so admin check is bypassed in simulator
   simProfile.plan_id = simPlanId;
   
   let plans = DEFAULT_PLANS;
@@ -84,6 +90,14 @@ export function applySimulator(profile) {
 
   const plan = plans.find(p => p.id === simPlanId);
   if (plan) {
+    // Copiar permissões do plano diretamente como overrides no perfil simulado
+    // para que checkUserPermission funcione sem precisar re-buscar o plano
+    simProfile.access_home_override = !!plan.accessHome;
+    simProfile.access_gym_override = !!plan.accessGym;
+    simProfile.access_create_override = !!plan.accessCreate;
+    simProfile.access_whatsapp_override = !!plan.accessWhatsapp;
+    simProfile.access_advanced_override = !!plan.accessAdvanced;
+
     if (plan.isTrial) {
       simProfile.status = 'trial';
       const endsAt = new Date();

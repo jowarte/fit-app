@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Dumbbell, Users, Settings, MessageCircle, CreditCard, ShoppingCart, Bell, Lock, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, Users, Settings, MessageCircle, CreditCard, ShoppingCart, Bell, Lock, ShieldAlert, Home } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 export function AdminLayout() {
@@ -87,12 +87,33 @@ export function AdminLayout() {
         flexDirection: 'column',
         gap: '1rem'
       }}>
-        <div style={{ padding: '0 1rem', marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div style={{ padding: '0 1rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <h2 style={{ fontSize: '1.2rem', color: 'var(--primary-color)', margin: 0 }}>Admin Panel</h2>
           <span style={{ fontSize: '0.8rem', background: isSuperAdmin ? '#ffc107' : 'rgba(255,255,255,0.1)', color: isSuperAdmin ? 'black' : 'white', padding: '0.2rem 0.6rem', borderRadius: '12px', width: 'fit-content', fontWeight: 'bold' }}>
             {isSuperAdmin ? 'SUPER ADMIN' : 'ADMIN'}
           </span>
         </div>
+
+        <Link 
+          to="/"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
+            padding: '1rem',
+            borderRadius: '8px',
+            textDecoration: 'none',
+            color: '#1a1a1a',
+            background: 'var(--primary-color)',
+            fontWeight: 'bold',
+            marginBottom: '1rem',
+            boxShadow: '0 4px 15px rgba(0, 210, 255, 0.3)',
+            transition: 'all 0.2s',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+          }}
+        >
+          <Home size={20} />
+          <span>Voltar ao App</span>
+        </Link>
 
         <Link 
           to="/admin"

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, Plus, Trash2, Edit2, Send, Clock, CalendarDays } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 export function AdminWhatsApp() {
   const [reminders, setReminders] = useState([]);
@@ -7,6 +8,8 @@ export function AdminWhatsApp() {
   const [apiUrl, setApiUrl] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [instanceName, setInstanceName] = useState('');
+  const [activationMessage, setActivationMessage] = useState('Olá! Sou aluno e quero ativar meus lembretes de treino neste número.');
+  const [isLoading, setIsLoading] = useState(true);
   
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -17,36 +20,64 @@ export function AdminWhatsApp() {
     message: 'Oi! Não esqueça do seu treino de hoje! 💪'
   });
 
-  // Carregar dados locais (Mock)
+  // Carregar dados do Supabase
   useEffect(() => {
-    const saved = localStorage.getItem('whatsapp_reminders');
-    const savedNum = localStorage.getItem('whatsapp_number');
-    const savedApiUrl = localStorage.getItem('evolution_api_url');
-    const savedApiKey = localStorage.getItem('evolution_api_key');
-    const savedInstance = localStorage.getItem('evolution_instance');
-    
-    if (saved) setReminders(JSON.parse(saved));
-    if (savedNum) setTargetNumber(savedNum);
-    if (savedApiUrl) setApiUrl(savedApiUrl);
-    if (savedApiKey) setApiKey(savedApiKey);
-    if (savedInstance) setInstanceName(savedInstance);
-  }, []);
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        // Carregar configurações
+        const { data: settings } = await supabase.from('app_settings').select('*').eq('id', 1).single();
+        if (settings) {
+          setTargetNumber(settings.whatsapp_bot_number || '');
+          setApiUrl(settings.evolution_api_url || '');
+          setApiKey(settings.evolution_api_key || '');
+          setInstanceName(settings.evolution_instance || '');
+          if (settings.whatsapp_activation_message) {
+            setActivationMessage(settings.whatsapp_activation_message);
+          }
+        }
 
-  // Salvar dados locais
-  useEffect(() => {
-    localStorage.setItem('whatsapp_reminders', JSON.stringify(reminders));
-  }, [reminders]);
+        // Carregar lembretes
+        const { data: rems } = await supabase.from('whatsapp_reminders').select('*').order('created_at', { ascending: false });
+        if (rems) {
+          // Ajusta os nomes das propriedades que vêm do banco (snake_case -> camelCase)
+          const mappedRems = rems.map(r => ({
+            id: r.id,
+            title: r.title,
+            dayOfWeek: r.day_of_week,
+            time: r.time,
+            message: r.message,
+            active: r.active
+          }));
+          setReminders(mappedRems);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar dados do WhatsApp", err);
+      }
+      setIsLoading(false);
+    }
+    loadData();
+  }, []);
 
   const saveNumber = (e) => {
     setTargetNumber(e.target.value);
   };
 
-  const saveCredentials = () => {
-    localStorage.setItem('whatsapp_number', targetNumber);
-    localStorage.setItem('evolution_api_url', apiUrl);
-    localStorage.setItem('evolution_api_key', apiKey);
-    localStorage.setItem('evolution_instance', instanceName);
-    alert('Credenciais salvas com sucesso!');
+  const saveCredentials = async () => {
+    try {
+      const { error } = await supabase.from('app_settings').update({
+        whatsapp_bot_number: targetNumber,
+        evolution_api_url: apiUrl,
+        evolution_api_key: apiKey,
+        evolution_instance: instanceName,
+        whatsapp_activation_message: activationMessage
+      }).eq('id', 1);
+
+      if (error) throw error;
+      alert('Credenciais salvas com sucesso!');
+    } catch (err) {
+      alert('Erro ao salvar credenciais: ' + err.message);
+    }
   };
 
   const handleNew = () => {
@@ -65,24 +96,59 @@ export function AdminWhatsApp() {
     setIsEditing(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este lembrete?')) {
-      setReminders(reminders.filter(r => r.id !== id));
+      try {
+        await supabase.from('whatsapp_reminders').delete().eq('id', id);
+        setReminders(reminders.filter(r => r.id !== id));
+      } catch (err) {
+        alert('Erro ao excluir: ' + err.message);
+      }
     }
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (formData.id) {
-      setReminders(reminders.map(r => r.id === formData.id ? formData : r));
-    } else {
-      setReminders([...reminders, { ...formData, id: Date.now().toString(), active: true }]);
+    try {
+      const payload = {
+        title: formData.title,
+        day_of_week: formData.dayOfWeek,
+        time: formData.time,
+        message: formData.message,
+        active: formData.id ? formData.active : true
+      };
+
+      if (formData.id) {
+        await supabase.from('whatsapp_reminders').update(payload).eq('id', formData.id);
+        setReminders(reminders.map(r => r.id === formData.id ? { ...formData, active: r.active } : r));
+      } else {
+        const { data } = await supabase.from('whatsapp_reminders').insert([payload]).select().single();
+        if (data) {
+          setReminders([{
+            id: data.id,
+            title: data.title,
+            dayOfWeek: data.day_of_week,
+            time: data.time,
+            message: data.message,
+            active: data.active
+          }, ...reminders]);
+        }
+      }
+      setIsEditing(false);
+    } catch (err) {
+      alert('Erro ao salvar lembrete: ' + err.message);
     }
-    setIsEditing(false);
   };
 
-  const toggleActive = (id) => {
-    setReminders(reminders.map(r => r.id === id ? { ...r, active: !r.active } : r));
+  const toggleActive = async (id) => {
+    const rem = reminders.find(r => r.id === id);
+    if (!rem) return;
+    try {
+      await supabase.from('whatsapp_reminders').update({ active: !rem.active }).eq('id', id);
+      setReminders(reminders.map(r => r.id === id ? { ...r, active: !r.active } : r));
+    } catch (err) {
+      alert('Erro ao alterar status: ' + err.message);
+    }
   };
 
   const testWhatsApp = (message) => {
@@ -90,11 +156,15 @@ export function AdminWhatsApp() {
       alert('Por favor, configure o "Número de Destino" primeiro.');
       return;
     }
-    // Formatar número para o padrão internacional (remove caracteres não numéricos)
+    // Formatar número para o padrão internacional
     const cleanNumber = targetNumber.replace(/\D/g, '');
     const url = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
+
+  if (isLoading) {
+    return <div style={{ padding: '2rem', textAlign: 'center' }}>Carregando dados...</div>;
+  }
 
   return (
     <div className="animate-fade-in">
@@ -179,9 +249,68 @@ export function AdminWhatsApp() {
             />
           </div>
         </div>
-        <button onClick={saveCredentials} className="btn btn-primary" style={{ padding: '0.5rem 1rem', background: '#25D366', borderColor: '#25D366', color: 'white' }}>
-          Salvar Credenciais
-        </button>
+
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Mensagem de Ativação do Fluxo</label>
+          <input 
+            type="text" 
+            placeholder="Ex: Olá! Quero ativar meus lembretes..."
+            value={activationMessage}
+            onChange={(e) => setActivationMessage(e.target.value)}
+            style={{ 
+              width: '100%', padding: '0.8rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', 
+              border: '1px solid rgba(255,255,255,0.1)', color: 'white'
+            }}
+          />
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginTop: '0.3rem' }}>
+            Mensagem pré-preenchida para o aluno enviar e autorizar as notificações.
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button onClick={saveCredentials} className="btn btn-primary" style={{ padding: '0.5rem 1rem', background: '#25D366', borderColor: '#25D366', color: 'white' }}>
+            Salvar Credenciais
+          </button>
+          
+          <button 
+            onClick={async () => {
+              if (!apiUrl || !apiKey || !instanceName || !targetNumber) {
+                alert('Preencha todos os 4 campos (Número, URL, API Key e Nome da Instância) antes de testar.');
+                return;
+              }
+              try {
+                const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+                const cleanNumber = targetNumber.replace(/\D/g, '');
+                
+                const response = await fetch(`${baseUrl}/message/sendText/${instanceName}`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': apiKey
+                  },
+                  body: JSON.stringify({
+                    number: cleanNumber,
+                    text: '✅ *TreinoApp:* Teste de conexão da Evolution API concluído com sucesso!'
+                  })
+                });
+
+                if (response.ok) {
+                  alert('Teste enviado com sucesso! Verifique se a mensagem chegou no WhatsApp de destino.');
+                } else {
+                  let errMsg = 'Desconhecido';
+                  try { const data = await response.json(); errMsg = data.message || data.error || JSON.stringify(data); } catch (e) {}
+                  alert(`Falha no teste (Status ${response.status}): ${errMsg}`);
+                }
+              } catch (err) {
+                alert('Erro de conexão ao tentar testar a API: ' + err.message);
+              }
+            }} 
+            className="btn" 
+            style={{ padding: '0.5rem 1rem', background: 'rgba(37, 211, 102, 0.1)', color: '#25D366', border: '1px solid #25D366' }}
+          >
+            <Send size={16} style={{ marginRight: '0.5rem' }}/> Testar Disparo
+          </button>
+        </div>
       </div>
 
       {isEditing ? (
