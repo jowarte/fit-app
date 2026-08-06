@@ -30,6 +30,7 @@ import { CatalogPage } from './pages/CatalogPage';
 import { StudentDashboard } from './pages/StudentDashboard';
 import { ActiveWorkoutPage } from './pages/ActiveWorkoutPage';
 import { PokasLayout } from './pages/PokasLayout';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import './App.css'; // Limpar o App.css se existir, usando apenas index.css
 
 function Navbar() {
@@ -699,6 +700,7 @@ function App() {
             <Route path="/treinos" element={<TreinosPage />} />
             <Route path="/categorias" element={<CategoriesPage />} />
             <Route path="/login" element={<AuthPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/montar-treino" element={<WorkoutBuilder />} />
             <Route path="/conquistas" element={<ConquistasPage />} />
             <Route path="/config" element={<ConfigPage />} />

@@ -7,6 +7,7 @@ import { DEFAULT_PLANS } from '../lib/permissions';
 export function AuthPage() {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,7 +32,17 @@ export function AuthPage() {
     setError(null);
     setMessage(null);
 
-    if (isLogin) {
+    if (isForgotPassword) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset-password',
+      });
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('E-mail de recuperação enviado! Verifique sua caixa de entrada.');
+        setIsForgotPassword(false);
+      }
+    } else if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setError(error.message);
@@ -111,10 +122,10 @@ export function AuthPage() {
       <div className="glass-card" style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <h2 style={{ margin: '0 0 0.5rem 0', color: 'var(--primary-color)' }}>
-            {isLogin ? 'Bem-vindo de volta' : 'Criar Conta'}
+            {isForgotPassword ? 'Recuperar Senha' : isLogin ? 'Bem-vindo de volta' : 'Criar Conta'}
           </h2>
           <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
-            {isLogin ? 'Faça login para acessar seus treinos' : 'Cadastre-se para começar'}
+            {isForgotPassword ? 'Enviaremos um link para redefinir sua senha' : isLogin ? 'Faça login para acessar seus treinos' : 'Cadastre-se para começar'}
           </p>
         </div>
 
@@ -131,13 +142,13 @@ export function AuthPage() {
         )}
 
         <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {!isLogin && (
+          {!isLogin && !isForgotPassword && (
             <div style={{ position: 'relative' }}>
               <User size={20} color="var(--text-secondary)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
               <input
                 type="text"
                 placeholder="Nome Completo"
-                required={!isLogin}
+                required={!isLogin && !isForgotPassword}
                 value={name}
                 onChange={e => setName(e.target.value)}
                 style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 3rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
@@ -157,19 +168,21 @@ export function AuthPage() {
             />
           </div>
 
-          <div style={{ position: 'relative' }}>
-            <Lock size={20} color="var(--text-secondary)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
-            <input
-              type="password"
-              placeholder="Sua senha"
-              required
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 3rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
-            />
-          </div>
+          {!isForgotPassword && (
+            <div style={{ position: 'relative' }}>
+              <Lock size={20} color="var(--text-secondary)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <input
+                type="password"
+                placeholder="Sua senha"
+                required={!isForgotPassword}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 3rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+              />
+            </div>
+          )}
 
-          {!isLogin && (
+          {!isLogin && !isForgotPassword && (
             <div style={{ position: 'relative' }}>
               <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
@@ -177,7 +190,7 @@ export function AuthPage() {
               <input
                 type="tel"
                 placeholder="Seu WhatsApp (ex: 11999999999)"
-                required={!isLogin}
+                required={!isLogin && !isForgotPassword}
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 3rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
@@ -186,17 +199,27 @@ export function AuthPage() {
           )}
 
           <button type="submit" className="btn btn-primary" disabled={loading} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '1rem' }}>
-            {loading ? 'Aguarde...' : isLogin ? <><LogIn size={18} /> Entrar</> : <><UserPlus size={18} /> Cadastrar</>}
+            {loading ? 'Aguarde...' : isForgotPassword ? <><Mail size={18} /> Enviar Link</> : isLogin ? <><LogIn size={18} /> Entrar</> : <><UserPlus size={18} /> Cadastrar</>}
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+        <div style={{ textAlign: 'center', marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {!isForgotPassword && isLogin && (
+            <button 
+              type="button" 
+              onClick={() => setIsForgotPassword(true)} 
+              style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', fontSize: '0.9rem' }}
+            >
+              Esqueceu a senha?
+            </button>
+          )}
+          
           <button 
             type="button" 
-            onClick={() => setIsLogin(!isLogin)} 
+            onClick={() => { setIsLogin(!isLogin); setIsForgotPassword(false); }} 
             style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem' }}
           >
-            {isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Faça login'}
+            {isForgotPassword ? 'Voltar para o Login' : isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Faça login'}
           </button>
         </div>
       </div>

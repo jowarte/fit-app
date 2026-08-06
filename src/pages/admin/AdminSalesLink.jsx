@@ -4,7 +4,20 @@ import { Link } from 'react-router-dom';
 
 export function AdminSalesLink() {
   const [copied, setCopied] = React.useState(false);
+  const [fbPixel, setFbPixel] = React.useState('');
+  const [savedMessage, setSavedMessage] = React.useState('');
   const salesLink = window.location.origin + '/planos';
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem('admin_fb_pixel');
+    if (saved) setFbPixel(saved);
+  }, []);
+
+  const handleSavePixel = () => {
+    localStorage.setItem('admin_fb_pixel', fbPixel);
+    setSavedMessage('Pixel salvo com sucesso!');
+    setTimeout(() => setSavedMessage(''), 3000);
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(salesLink);
@@ -59,6 +72,31 @@ export function AdminSalesLink() {
                 {copied ? <Check size={20} color="var(--primary-color)"/> : <Copy size={20} />}
                 {copied ? 'Copiado!' : 'Copiar'}
               </button>
+            </div>
+          </div>
+
+          {/* Facebook Pixel */}
+          <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0' }}>Pixel do Facebook Ads</h3>
+            <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Adicione o ID do seu Pixel para rastrear visitas e conversões na página de vendas.</p>
+            <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column' }}>
+              <input 
+                type="text" 
+                placeholder="Ex: 123456789012345"
+                value={fbPixel}
+                onChange={(e) => setFbPixel(e.target.value)}
+                style={{ flex: 1, padding: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', fontSize: '1rem' }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <button 
+                  onClick={handleSavePixel}
+                  className="btn btn-primary" 
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.8rem 1.5rem' }}
+                >
+                  <Check size={20} /> Salvar Pixel
+                </button>
+                {savedMessage && <span style={{ color: 'var(--primary-color)', fontSize: '0.9rem' }}>{savedMessage}</span>}
+              </div>
             </div>
           </div>
           
