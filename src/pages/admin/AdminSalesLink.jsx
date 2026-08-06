@@ -1,6 +1,7 @@
 import React from 'react';
 import { ShoppingCart, Eye, Copy, ExternalLink, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../../lib/supabase';
 
 export function AdminSalesLink() {
   const [copied, setCopied] = React.useState(false);
@@ -9,14 +10,23 @@ export function AdminSalesLink() {
   const salesLink = window.location.origin + '/planos';
 
   React.useEffect(() => {
-    const saved = localStorage.getItem('admin_fb_pixel');
-    if (saved) setFbPixel(saved);
+    async function fetchPixel() {
+      const { data } = await supabase.from('app_settings').select('fb_pixel').eq('id', 1).single();
+      if (data && data.fb_pixel) {
+        setFbPixel(data.fb_pixel);
+      }
+    }
+    fetchPixel();
   }, []);
 
-  const handleSavePixel = () => {
-    localStorage.setItem('admin_fb_pixel', fbPixel);
-    setSavedMessage('Pixel salvo com sucesso!');
-    setTimeout(() => setSavedMessage(''), 3000);
+  const handleSavePixel = async () => {
+    const { error } = await supabase.from('app_settings').upsert({ id: 1, fb_pixel: fbPixel });
+    if (!error) {
+      setSavedMessage('Pixel salvo com sucesso!');
+    } else {
+      setSavedMessage('Erro ao salvar. Verifique se a coluna fb_pixel existe no Supabase.');
+    }
+    setTimeout(() => setSavedMessage(''), 4000);
   };
 
   const handleCopy = () => {
