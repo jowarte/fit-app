@@ -378,7 +378,7 @@ export function PokasLayout() {
         if (profile) {
           const simProfile = applySimulator(profile);
           setUserProfile(simProfile);
-          setHasAccess(checkUserPermission(simProfile, 'access_advanced'));
+          setHasAccess(true); // O layout principal deve ser acessível por todos
         }
       } else {
         setHasAccess(false);
@@ -395,16 +395,16 @@ export function PokasLayout() {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
         <div style={{ position: 'fixed', top: '0.8rem', left: '1rem', zIndex: 201 }}>
-          <Link to="/" style={{ color: 'white', textDecoration: 'none', background: 'rgba(168, 85, 247, 0.25)', border: '1px solid rgba(168, 85, 247, 0.5)', padding: '0.5rem 1rem', borderRadius: '20px', fontSize: '0.85rem' }}>← App Good</Link>
+          <Link to="/" style={{ color: 'white', textDecoration: 'none', background: 'rgba(168, 85, 247, 0.25)', border: '1px solid rgba(168, 85, 247, 0.5)', padding: '0.5rem 1rem', borderRadius: '20px', fontSize: '0.85rem' }}>← Voltar</Link>
         </div>
         <div className="glass-card animate-fade-in" style={{ maxWidth: '400px', width: '100%', textAlign: 'center', padding: '2.5rem', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
           <Lock size={56} color="#a855f7" style={{ marginBottom: '1.5rem', marginLeft: 'auto', marginRight: 'auto' }} />
-          <h2 style={{ color: 'white', marginBottom: '1rem' }}>Treino Avançado Pro</h2>
+          <h2 style={{ color: 'white', marginBottom: '1rem' }}>Acesso Restrito</h2>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.95rem' }}>
-            A área de Treino Avançado é exclusiva para planos que incluem este benefício. Faça um upgrade para liberar o acesso total!
+            Você precisa estar logado para acessar esta área.
           </p>
-          <Link to="/planos" className="btn btn-primary" style={{ width: '100%', background: 'linear-gradient(135deg, #a855f7, #6b21a8)', border: 'none', display: 'inline-block', padding: '1rem', textDecoration: 'none' }}>
-            Ver Planos
+          <Link to="/login" className="btn btn-primary" style={{ width: '100%', background: 'linear-gradient(135deg, #a855f7, #6b21a8)', border: 'none', display: 'inline-block', padding: '1rem', textDecoration: 'none' }}>
+            Fazer Login
           </Link>
         </div>
       </div>

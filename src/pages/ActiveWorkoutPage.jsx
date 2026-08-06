@@ -92,6 +92,7 @@ export function ActiveWorkoutPage() {
   const navigate = useNavigate();
   const [workoutId, setWorkoutId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(null);
   
   const [setsCount, setSetsCount] = useState(0);
   const [recordsCount, setRecordsCount] = useState(0);
@@ -130,76 +131,103 @@ export function ActiveWorkoutPage() {
   const isNewPR = previousBestE1rm !== null && parseFloat(e1rm) > parseFloat(previousBestE1rm);
 
   useEffect(() => {
+    async function initWorkout() {
+      try {
+        setLoading(true);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) return;
+        
+        let hasAdvAccess = false;
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+        
+        if (profile) {
+          const { applySimulator, checkUserPermission } = await import('../lib/permissions.js');
+          const simProfile = applySimulator(profile);
+          
+          // Buscar o plano no banco caso ele esteja na simulação ou no plano real
+          const planId = simProfile.plan_id;
+          if (planId) {
+            const { data: planData } = await supabase.from('plans').select('*').eq('id', planId).single();
+            if (planData) {
+               // Verifica se o plano concede o acesso
+               hasAdvAccess = !!planData.access_advanced;
+            } else {
+               hasAdvAccess = checkUserPermission(simProfile, 'access_advanced');
+            }
+          } else {
+            hasAdvAccess = checkUserPermission(simProfile, 'access_advanced');
+          }
+          
+          // Se for admin REAL e não estiver simulando (ou se quiser deixar admin sempre acessar quando não simula)
+          if ((profile.role === 'super_admin' || profile.role === 'admin') && !localStorage.getItem('simulated_plan_id')) {
+            hasAdvAccess = true;
+          }
+
+          setHasAccess(hasAdvAccess);
+        } else {
+          setHasAccess(false);
+        }
+
+        const { data: existingWorkout } = await supabase
+          .from('user_workouts')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .eq('status', 'in_progress')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        let activeId = null;
+        if (existingWorkout) {
+          activeId = existingWorkout.id;
+          const start = new Date(existingWorkout.started_at || existingWorkout.created_at).getTime();
+          setElapsedTime(Math.floor((Date.now() - start) / 1000));
+          setVolume(existingWorkout.volume_kg || 0);
+          setRecordsCount(existingWorkout.prs_count || 0);
+          const { count } = await supabase
+            .from('user_sets')
+            .select('*', { count: 'exact', head: true })
+            .eq('workout_exercise_id', activeId);
+          setSetsCount(count || 0);
+        } else {
+          const { data: newWorkout, error } = await supabase
+            .from('user_workouts')
+            .insert([{ user_id: session.user.id, status: 'in_progress', started_at: new Date().toISOString() }])
+            .select()
+            .single();
+          if (error) throw error;
+          activeId = newWorkout.id;
+        }
+        setWorkoutId(activeId);
+
+        const activeTmplStr = localStorage.getItem('pokas_active_template');
+        if (activeTmplStr && hasAdvAccess) {
+          try {
+            const tmpl = JSON.parse(activeTmplStr);
+            const formattedExs = tmpl.exercises.map(e => ({
+              id: e.id,
+              name: e.name,
+              muscle_group: e.muscle_group,
+              media_url: e.media_url,
+              media_type: e.media_type,
+              sets: e.sets?.map(s => ({ ...s, id: crypto.randomUUID() })) || [{ id: crypto.randomUUID(), weight: '', reps: '', rpe: '', completed: false }]
+            }));
+            setExercises(formattedExs);
+            localStorage.removeItem('pokas_active_template');
+          } catch(e) {}
+        }
+        await fetchWorkoutData(activeId);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
     initWorkout();
     const interval = setInterval(() => setElapsedTime(prev => prev + 1), 1000);
     return () => clearInterval(interval);
   }, []);
-
-  async function initWorkout() {
-    try {
-      setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
-      if (!userId) return;
-
-      const { data: existingWorkout } = await supabase
-        .from('user_workouts')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('status', 'in_progress')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      let activeId = null;
-      if (existingWorkout) {
-        activeId = existingWorkout.id;
-        const start = new Date(existingWorkout.started_at || existingWorkout.created_at).getTime();
-        setElapsedTime(Math.floor((Date.now() - start) / 1000));
-        setVolume(existingWorkout.volume_kg || 0);
-        setRecordsCount(existingWorkout.prs_count || 0);
-        // Count sets
-        const { count } = await supabase
-          .from('user_sets')
-          .select('*', { count: 'exact', head: true })
-          .eq('workout_exercise_id', activeId);
-        setSetsCount(count || 0);
-      } else {
-        const { data: newWorkout, error } = await supabase
-          .from('user_workouts')
-          .insert([{ user_id: userId, status: 'in_progress', started_at: new Date().toISOString() }])
-          .select()
-          .single();
-        if (error) throw error;
-        activeId = newWorkout.id;
-      }
-      setWorkoutId(activeId);
-
-      // Load active template if selected
-      const activeTemplateJson = localStorage.getItem('pokas_active_template');
-      if (activeTemplateJson) {
-        try {
-          const template = JSON.parse(activeTemplateJson);
-          localStorage.removeItem('pokas_active_template');
-          if (template.exercises && template.exercises.length > 0) {
-            const toInsert = template.exercises.map(e => ({
-              workout_id: activeId,
-              exercise_id: e.id
-            }));
-            await supabase.from('workout_exercises').insert(toInsert);
-          }
-        } catch (err) {
-          console.error('Error loading template:', err);
-        }
-      }
-
-      await fetchWorkoutData(activeId);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function fetchWorkoutData(wId) {
     const { data: workoutExs, error: wxErr } = await supabase
@@ -376,11 +404,33 @@ export function ActiveWorkoutPage() {
     ex.name.toLowerCase().includes(catalogSearch.toLowerCase())
   );
 
-  if (loading) return (
+  if (loading || hasAccess === null) return (
     <div className="container" style={{ paddingTop: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
       Carregando treino...
     </div>
   );
+
+  if (!hasAccess) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <div className="glass-card animate-fade-in" style={{ maxWidth: '400px', width: '100%', textAlign: 'center', padding: '2.5rem', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
+          <div style={{ display: 'inline-flex', background: 'rgba(168, 85, 247, 0.1)', padding: '1rem', borderRadius: '50%', marginBottom: '1.5rem', color: '#a855f7' }}>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </div>
+          <h2 style={{ color: 'white', marginBottom: '1rem' }}>Treino Avançado Pro</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.95rem' }}>
+            A área de Treino Avançado é exclusiva para planos que incluem este benefício. Faça um upgrade para liberar o acesso total e acompanhar seus resultados!
+          </p>
+          <button onClick={() => window.location.href = '/planos'} className="btn btn-primary" style={{ width: '100%', background: 'linear-gradient(135deg, #a855f7, #6b21a8)', border: 'none', padding: '1rem', marginBottom: '1rem' }}>
+            Ver Planos
+          </button>
+          <button onClick={() => navigate('/pokas')} className="btn" style={{ width: '100%', background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '1rem' }}>
+            Voltar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container animate-fade-in" style={{ paddingTop: '1.5rem', paddingBottom: '6rem' }}>

@@ -96,24 +96,6 @@ export function ConfigPage() {
   }, []);
 
   const handleToggle = async () => {
-    const hasWhatsappAccess = checkUserPermission(userProfile, 'access_whatsapp');
-    if (!hasWhatsappAccess) {
-      // DEBUG temporário - remover depois
-      const debugInfo = {
-        status: userProfile?.status,
-        plan_id: userProfile?.plan_id,
-        is_premium: userProfile?.is_premium,
-        access_whatsapp_override: userProfile?.access_whatsapp_override,
-        trial_ends_at: userProfile?.trial_ends_at,
-        now: new Date().toISOString(),
-        expired: userProfile?.trial_ends_at ? new Date() > new Date(userProfile.trial_ends_at) : 'sem data',
-        simPlanId: localStorage.getItem('simulated_plan_id'),
-        plansCount: plans.length
-      };
-      alert('DEBUG - Bloqueado! Dados:\n' + JSON.stringify(debugInfo, null, 2));
-      return;
-    }
-
     const newValue = !whatsappEnabled;
     setWhatsappEnabled(newValue);
     
@@ -269,104 +251,148 @@ export function ConfigPage() {
             )}
             
             {isConnected && (
-              <div style={{ marginTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <h4 style={{ margin: 0, color: 'white' }}>Meus Horários</h4>
-                  {!showAddReminder && (
-                    <button onClick={() => setShowAddReminder(true)} style={{ background: 'none', border: 'none', color: '#25D366', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}>
-                      <Plus size={16} /> Adicionar
-                    </button>
-                  )}
-                </div>
-
-                {showAddReminder && (
-                  <form onSubmit={handleSaveReminder} className="animate-scale" style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '1.5rem' }}>
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Identificação</label>
-                      <input 
-                        type="text" required
-                        value={newReminder.title} onChange={e => setNewReminder({...newReminder, title: e.target.value})}
-                        style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}
-                      />
-                    </div>
-                    
-                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Dia da Semana</label>
-                        <select 
-                          value={newReminder.dayOfWeek} onChange={e => setNewReminder({...newReminder, dayOfWeek: e.target.value})}
-                          style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}
-                        >
-                          <option>Segunda-feira</option>
-                          <option>Terça-feira</option>
-                          <option>Quarta-feira</option>
-                          <option>Quinta-feira</option>
-                          <option>Sexta-feira</option>
-                          <option>Sábado</option>
-                          <option>Domingo</option>
-                          <option>Todos os dias</option>
-                        </select>
+              <div style={{ marginTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem', position: 'relative' }}>
+                {/* Bloquear Meus Horários para plano sem access_whatsapp */}
+                {!checkUserPermission(userProfile, 'access_whatsapp') ? (
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ filter: 'blur(3px)', pointerEvents: 'none', userSelect: 'none', opacity: 0.4 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <h4 style={{ margin: 0, color: 'white' }}>Meus Horários</h4>
+                        <button style={{ background: 'none', border: 'none', color: '#25D366', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                          <Plus size={16} /> Adicionar
+                        </button>
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Horário</label>
-                        <input 
-                          type="time" required
-                          value={newReminder.time} onChange={e => setNewReminder({...newReminder, time: e.target.value})}
-                          style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}
-                        />
+                      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '0.8rem' }}>
+                        <h5 style={{ margin: '0 0 0.3rem 0', color: 'white' }}>Meu Treino</h5>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Segunda-feira • 18:00</span>
+                      </div>
+                      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <h5 style={{ margin: '0 0 0.3rem 0', color: 'white' }}>Academia</h5>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Quarta-feira • 07:00</span>
                       </div>
                     </div>
-                    
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Mensagem Personalizada</label>
-                      <input 
-                        type="text" required
-                        value={newReminder.message} onChange={e => setNewReminder({...newReminder, message: e.target.value})}
-                        style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}
-                      />
+                    <div style={{
+                      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      background: 'rgba(0,0,0,0.6)', borderRadius: '12px', zIndex: 10,
+                      padding: '1.5rem', textAlign: 'center'
+                    }}>
+                      <span style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔒</span>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'white' }}>Lembretes Automáticos</h4>
+                      <p style={{ margin: '0 0 1rem 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                        Configure horários personalizados de lembrete assinando um plano que inclui Lembretes via WhatsApp.
+                      </p>
+                      <button
+                        onClick={() => navigate('/planos')}
+                        className="btn btn-primary"
+                        style={{ padding: '0.6rem 1.5rem', background: 'linear-gradient(135deg, #a855f7, #6b21a8)', border: 'none', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}
+                      >
+                        Ver Planos
+                      </button>
                     </div>
-                    
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button type="submit" className="btn" style={{ flex: 1, padding: '0.5rem', background: '#25D366', color: 'white', fontSize: '0.85rem' }}>Salvar</button>
-                      <button type="button" className="btn" onClick={() => setShowAddReminder(false)} style={{ flex: 1, padding: '0.5rem', background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}>Cancelar</button>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <h4 style={{ margin: 0, color: 'white' }}>Meus Horários</h4>
+                      {!showAddReminder && (
+                        <button onClick={() => setShowAddReminder(true)} style={{ background: 'none', border: 'none', color: '#25D366', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                          <Plus size={16} /> Adicionar
+                        </button>
+                      )}
                     </div>
-                  </form>
-                )}
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                  {myReminders.length === 0 ? (
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: 0 }}>Você ainda não criou nenhum horário personalizado. O app também enviará os lembretes gerais configurados pelo seu treinador.</p>
-                  ) : (
-                    myReminders.map(rem => (
-                      <div key={rem.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', opacity: rem.active ? 1 : 0.5 }}>
-                        <div>
-                          <h5 style={{ margin: '0 0 0.3rem 0', color: 'white', fontSize: '0.9rem' }}>{rem.title}</h5>
-                          <div style={{ display: 'flex', gap: '0.8rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><CalendarDays size={12}/> {rem.day_of_week}</span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={12}/> {rem.time}</span>
+                    {showAddReminder && (
+                      <form onSubmit={handleSaveReminder} className="animate-scale" style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '1.5rem' }}>
+                        <div style={{ marginBottom: '1rem' }}>
+                          <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Identificação</label>
+                          <input 
+                            type="text" required
+                            value={newReminder.title} onChange={e => setNewReminder({...newReminder, title: e.target.value})}
+                            style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}
+                          />
+                        </div>
+                        
+                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Dia da Semana</label>
+                            <select 
+                              value={newReminder.dayOfWeek} onChange={e => setNewReminder({...newReminder, dayOfWeek: e.target.value})}
+                              style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}
+                            >
+                              <option>Segunda-feira</option>
+                              <option>Terça-feira</option>
+                              <option>Quarta-feira</option>
+                              <option>Quinta-feira</option>
+                              <option>Sexta-feira</option>
+                              <option>Sábado</option>
+                              <option>Domingo</option>
+                              <option>Todos os dias</option>
+                            </select>
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Horário</label>
+                            <input 
+                              type="time" required
+                              value={newReminder.time} onChange={e => setNewReminder({...newReminder, time: e.target.value})}
+                              style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}
+                            />
                           </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                            <input 
-                              type="checkbox" checked={rem.active} onChange={() => toggleReminderActive(rem.id, rem.active)}
-                              style={{ width: '16px', height: '16px', accentColor: '#25D366' }}
-                            />
-                          </label>
-                          <button onClick={() => handleDeleteReminder(rem.id)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '0.2rem' }}>
-                            <Trash2 size={16} />
-                          </button>
+                        
+                        <div style={{ marginBottom: '1rem' }}>
+                          <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>Mensagem Personalizada</label>
+                          <input 
+                            type="text" required
+                            value={newReminder.message} onChange={e => setNewReminder({...newReminder, message: e.target.value})}
+                            style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}
+                          />
                         </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                        
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button type="submit" className="btn" style={{ flex: 1, padding: '0.5rem', background: '#25D366', color: 'white', fontSize: '0.85rem' }}>Salvar</button>
+                          <button type="button" className="btn" onClick={() => setShowAddReminder(false)} style={{ flex: 1, padding: '0.5rem', background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}>Cancelar</button>
+                        </div>
+                      </form>
+                    )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                      {myReminders.length === 0 ? (
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic', margin: 0 }}>Você ainda não criou nenhum horário personalizado. O app também enviará os lembretes gerais configurados pelo seu treinador.</p>
+                      ) : (
+                        myReminders.map(rem => (
+                          <div key={rem.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', opacity: rem.active ? 1 : 0.5 }}>
+                            <div>
+                              <h5 style={{ margin: '0 0 0.3rem 0', color: 'white', fontSize: '0.9rem' }}>{rem.title}</h5>
+                              <div style={{ display: 'flex', gap: '0.8rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><CalendarDays size={12}/> {rem.day_of_week}</span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={12}/> {rem.time}</span>
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                <input 
+                                  type="checkbox" checked={rem.active} onChange={() => toggleReminderActive(rem.id, rem.active)}
+                                  style={{ width: '16px', height: '16px', accentColor: '#25D366' }}
+                                />
+                              </label>
+                              <button onClick={() => handleDeleteReminder(rem.id)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '0.2rem' }}>
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
         )}
       </div>
       
+
       {userProfile && (
         <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>

@@ -110,9 +110,13 @@ export function CatalogPage() {
     const min = Math.min(...values) * 0.95;
     const max = Math.max(...values) * 1.05;
     const width = 300, height = 80;
+    
+    // Prevent NaN if all values are the same (e.g. 0 kg for bodyweight exercises)
+    const range = max - min === 0 ? 1 : max - min;
+    
     const points = values.map((v, i) => {
       const x = (i / (values.length - 1)) * width;
-      const y = height - ((v - min) / (max - min)) * height;
+      const y = height - ((v - min) / range) * height;
       return `${x},${y}`;
     }).join(' ');
     return (
@@ -128,7 +132,7 @@ export function CatalogPage() {
           <polyline points={points} fill="none" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           {values.map((v, i) => {
             const x = (i / (values.length - 1)) * width;
-            const y = height - ((v - min) / (max - min)) * height;
+            const y = height - ((v - min) / range) * height;
             return <circle key={i} cx={x} cy={y} r="4" fill={sets[i].is_pr ? '#a855f7' : '#555'} stroke="#111" strokeWidth="2" />;
           })}
         </svg>
@@ -141,8 +145,9 @@ export function CatalogPage() {
   };
 
   return (
-    <div className="container animate-fade-in" style={{ paddingTop: '2rem', paddingBottom: '6rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+    <>
+      <div className="container animate-fade-in" style={{ paddingTop: '2rem', paddingBottom: '6rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <div>
           <h2 style={{ margin: 0 }}>Exercícios</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0.2rem 0 0 0' }}>0 com recorde • {exercises.length} no catálogo</p>
@@ -208,10 +213,11 @@ export function CatalogPage() {
           ))}
         </div>
       )}
+      </div>
 
       {modalOpen && (
         <div className="animate-fade-in" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <div className="glass-card" style={{ width: '100%', borderBottomLeftRadius: 0, borderBottomRightRadius: 0, padding: '1.5rem', background: 'var(--bg-card)' }}>
+          <div className="glass-card" style={{ width: '100%', borderBottomLeftRadius: 0, borderBottomRightRadius: 0, padding: '1.5rem', background: 'var(--surface-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h3 style={{ margin: 0 }}>Novo exercício</h3>
               <button onClick={() => setModalOpen(false)} style={{ color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -259,7 +265,7 @@ export function CatalogPage() {
       {/* Exercise Detail Modal */}
       {selectedExercise && (
         <div className="animate-fade-in" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
-          <div style={{ width: '100%', background: 'var(--bg-card)', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '1.5rem', maxHeight: '80vh', overflowY: 'auto' }}>
+          <div style={{ width: '100%', background: 'var(--surface-color)', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '1.5rem', maxHeight: '80vh', overflowY: 'auto' }}>
             
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
               <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.2)' }}></div>
@@ -282,7 +288,7 @@ export function CatalogPage() {
                 <p style={{ margin: 0, fontSize: '0.75rem', color: '#c084fc', letterSpacing: '1px' }}>MELHOR RECORDE</p>
                 {exerciseSets.length > 0 ? (
                   <h3 style={{ margin: '0.2rem 0 0 0', color: 'white', fontSize: '1.2rem' }}>
-                    {Math.max(...exerciseSets.map(s => s.e1rm || 0)).toFixed(1)} kg E1RM
+                    {Math.max(...exerciseSets.map(s => Number(s.e1rm || 0))).toFixed(1)} kg E1RM
                   </h3>
                 ) : (
                   <h3 style={{ margin: '0.2rem 0 0 0', color: 'var(--text-secondary)', fontSize: '1rem' }}>Nenhum PR ainda</h3>
@@ -305,7 +311,7 @@ export function CatalogPage() {
               <div style={{ display: 'flex', gap: '0.6rem' }}>
                 <input
                   type="number"
-                  placeholder={`Atual: ${exerciseSets.length > 0 ? Math.max(...exerciseSets.map(s => s.e1rm || 0)).toFixed(1) : '0'} kg`}
+                  placeholder={`Atual: ${exerciseSets.length > 0 ? Math.max(...exerciseSets.map(s => Number(s.e1rm || 0))).toFixed(1) : '0'} kg`}
                   value={goalInput}
                   onChange={e => setGoalInput(e.target.value)}
                   style={{ flex: 1, padding: '0.7rem 0.8rem', borderRadius: '10px', border: '1px solid rgba(251,191,36,0.3)', background: 'rgba(255,255,255,0.05)', color: 'white', fontSize: '0.9rem' }}
@@ -331,7 +337,7 @@ export function CatalogPage() {
                     </span>
                     <span style={{ color: 'white', fontWeight: 'bold' }}>{s.weight}kg × {s.reps} reps</span>
                     <span style={{ color: s.is_pr ? '#a855f7' : 'var(--text-secondary)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                      {s.is_pr && <Trophy size={12} />} E1RM {(s.e1rm || 0).toFixed(1)}kg
+                      {s.is_pr && <Trophy size={12} />} E1RM {Number(s.e1rm || 0).toFixed(1)}kg
                     </span>
                   </div>
                 ))}
@@ -340,6 +346,6 @@ export function CatalogPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

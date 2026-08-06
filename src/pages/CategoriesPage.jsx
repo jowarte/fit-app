@@ -13,6 +13,7 @@ export function CategoriesPage() {
   
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
 
   // Filtros Globais para as Pastas
   const [globalSearch, setGlobalSearch] = useState('');
@@ -270,21 +271,37 @@ export function CategoriesPage() {
 
   return (
     <div className="container animate-fade-in" style={{ paddingTop: '2rem', paddingBottom: '6rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-        <button 
-          onClick={() => { setSelectedCategory(null); setSearchQuery(''); }}
-          style={{ 
-            background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', 
-            padding: '0.5rem', borderRadius: '50%', cursor: 'pointer', 
-            display: 'flex', alignItems: 'center', justifyContent: 'center' 
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button 
+            onClick={() => { setSelectedCategory(null); setSearchQuery(''); }}
+            style={{ 
+              background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', 
+              padding: '0.5rem', borderRadius: '50%', cursor: 'pointer', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center' 
+            }}
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 style={{ margin: 0 }}>{selectedCategory}</h2>
+        </div>
+        <button
+          onClick={() => setViewMode(v => v === 'list' ? 'grid' : 'list')}
+          style={{
+            background: viewMode === 'grid' ? 'rgba(168,85,247,0.3)' : 'rgba(255,255,255,0.08)',
+            border: '1px solid ' + (viewMode === 'grid' ? 'rgba(168,85,247,0.6)' : 'rgba(255,255,255,0.15)'),
+            color: viewMode === 'grid' ? '#e9d5ff' : 'white',
+            padding: '0.5rem 1rem', borderRadius: '12px', cursor: 'pointer',
+            fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.4rem',
+            transition: 'all 0.2s'
           }}
         >
-          <ArrowLeft size={24} />
+          <LayoutGrid size={15} />
+          {viewMode === 'list' ? 'Minimizar Previews' : 'Expandir Vídeos'}
         </button>
-        <h2 style={{ margin: 0 }}>{selectedCategory}</h2>
       </div>
 
-      <div style={{ position: 'relative', marginBottom: '2rem' }}>
+      <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
         <Search size={20} color="var(--text-secondary)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
         <input 
           type="text" 
@@ -300,7 +317,12 @@ export function CategoriesPage() {
         />
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div style={{
+        display: viewMode === 'grid' ? 'grid' : 'flex',
+        flexDirection: viewMode === 'grid' ? undefined : 'column',
+        gridTemplateColumns: viewMode === 'grid' ? '1fr 1fr' : undefined,
+        gap: viewMode === 'grid' ? '0.75rem' : '2rem'
+      }}>
         {categoryExercises.map(ex => {
           const isHome = selectedCategory === 'Treino em Casa';
           const isAdvanced = selectedCategory === 'Treino Avançado';
@@ -322,56 +344,145 @@ export function CategoriesPage() {
           } 
           
           return (
-            <div key={ex.id} className="glass-card" style={{ padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
-              <h3 style={{ marginBottom: '1rem', color: isLocked ? 'var(--text-secondary)' : 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {isLocked && <Lock size={18} color="#ffc107" />}
-                {ex.name}
-              </h3>
+            <div key={ex.id} className="glass-card" style={{ 
+              padding: viewMode === 'grid' ? '0' : '1.5rem', 
+              position: 'relative', overflow: 'hidden',
+              cursor: viewMode === 'grid' ? 'default' : 'default'
+            }}>
               
-              <div style={{ position: 'relative' }}>
-                <div style={{ filter: isLocked ? 'blur(10px)' : 'none', transition: 'filter 0.3s', pointerEvents: isLocked ? 'none' : 'auto', userSelect: isLocked ? 'none' : 'auto' }}>
-                  <VideoPlayer 
-                    type={ex.media_type} 
-                    url={ex.media_url} 
-                    title="" 
-                  />
-                </div>
-                
-                {isLocked && (
-                  <div style={{ 
-                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, 
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    background: 'rgba(0,0,0,0.4)', borderRadius: '12px', zIndex: 10
+              {/* MODO GRID: thumbnail + nome sobreposto */}
+              {viewMode === 'grid' && (
+                <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden' }}>
+                  {/* Thumbnail da imagem */}
+                  {ex.media_url ? (
+                    <div style={{ 
+                      position: 'relative', 
+                      width: '100%', 
+                      paddingBottom: '100%', /* quadrado */
+                      background: '#111',
+                      filter: isLocked ? 'blur(8px)' : 'none',
+                      transition: 'filter 0.3s'
+                    }}>
+                      {ex.media_type === 'gif' || ex.media_type === 'local_video' ? (
+                        <img 
+                          src={ex.media_url} 
+                          alt={ex.name}
+                          style={{ 
+                            position: 'absolute', top: 0, left: 0, 
+                            width: '100%', height: '100%', 
+                            objectFit: 'cover'
+                          }}
+                        />
+                      ) : (
+                        /* YouTube ou outros - mostra thumbnail */
+                        <div style={{ 
+                          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                          background: 'linear-gradient(135deg, #1a1a2e, #16213e)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                          <span style={{ fontSize: '2.5rem' }}>🎬</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ 
+                      width: '100%', paddingBottom: '100%', position: 'relative',
+                      background: 'rgba(255,255,255,0.04)' 
+                    }}>
+                      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: '2rem' }}>💪</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Nome sobreposto na parte de baixo */}
+                  <div style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.5) 60%, transparent 100%)',
+                    padding: '1.5rem 0.6rem 0.6rem',
                   }}>
-                    <Lock size={48} color="#ffc107" style={{ marginBottom: '1rem' }} />
-                    <h3 style={{ margin: '0 0 0.5rem 0', color: 'white', textAlign: 'center', fontSize: '1.1rem' }}>
-                      {userProfile?.status === 'trial' ? 'Indisponível no Teste' : 'Conteúdo Exclusivo Pro'}
-                    </h3>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', textAlign: 'center', maxWidth: '85%', marginBottom: '1rem', marginTop: 0 }}>
-                      {userProfile?.status === 'trial' 
-                        ? 'Essa funcionalidade não está inclusa no seu período de teste. Assine um plano para liberar!' 
-                        : 'Acesse essa categoria assinando um de nossos planos.'}
+                    <p style={{ 
+                      margin: 0, fontSize: '0.75rem', fontWeight: '600',
+                      color: isLocked ? '#aaa' : 'white',
+                      lineHeight: '1.2',
+                      display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
+                    }}>
+                      {isLocked && '🔒 '}{ex.name}
                     </p>
-                    <button 
-                      className="btn btn-primary" 
-                      onClick={() => {
-                        // Verifica se está logado
-                        supabase.auth.getSession().then(({ data }) => {
-                          if (!data.session) {
-                            alert('Você precisa criar uma conta primeiro para vincular o seu acesso Premium!');
-                            navigate('/login');
-                          } else {
-                            // Link do Checkout do Cakto
-                            navigate('/planos');
-                          }
-                        });
-                      }}
-                    >
-                      Desbloquear Agora
-                    </button>
                   </div>
-                )}
-              </div>
+
+                  {/* Overlay de bloqueio */}
+                  {isLocked && (
+                    <div style={{
+                      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      background: 'rgba(0,0,0,0.45)', zIndex: 5
+                    }}>
+                      <Lock size={28} color="#ffc107" />
+                      <span style={{ fontSize: '0.65rem', color: '#ffc107', fontWeight: 'bold', marginTop: '0.3rem' }}>PRO</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* MODO LISTA: nome + video como antes */}
+              {viewMode === 'list' && (
+                <>
+                  <h3 style={{ 
+                    marginBottom: '1rem', 
+                    color: isLocked ? 'var(--text-secondary)' : 'var(--primary-color)', 
+                    display: 'flex', alignItems: 'center', gap: '0.4rem',
+                    fontSize: '1.1rem', lineHeight: '1.3'
+                  }}>
+                    {isLocked && <Lock size={18} color="#ffc107" />}
+                    {ex.name}
+                  </h3>
+              
+                <div style={{ position: 'relative' }}>
+                  <div style={{ filter: isLocked ? 'blur(20px)' : 'none', transition: 'filter 0.3s', pointerEvents: isLocked ? 'none' : 'auto', userSelect: isLocked ? 'none' : 'auto' }}>
+                    <VideoPlayer 
+                      type={ex.media_type} 
+                      url={ex.media_url} 
+                      title="" 
+                    />
+                  </div>
+                  
+                  {isLocked && (
+                    <div style={{ 
+                      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, 
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      background: 'rgba(0,0,0,0.75)', borderRadius: '12px', zIndex: 10
+                    }}>
+                      <Lock size={48} color="#ffc107" style={{ marginBottom: '1rem' }} />
+                      <h3 style={{ margin: '0 0 0.5rem 0', color: 'white', textAlign: 'center', fontSize: '1.1rem' }}>
+                        {userProfile?.status === 'trial' ? 'Indisponível no Teste' : 'Conteúdo Exclusivo Pro'}
+                      </h3>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', textAlign: 'center', maxWidth: '85%', marginBottom: '1rem', marginTop: 0 }}>
+                        {userProfile?.status === 'trial' 
+                          ? 'Essa funcionalidade não está inclusa no seu período de teste. Assine um plano para liberar!' 
+                          : 'Acesse essa categoria assinando um de nossos planos.'}
+                      </p>
+                      <button 
+                        className="btn btn-primary" 
+                        onClick={() => {
+                          supabase.auth.getSession().then(({ data }) => {
+                            if (!data.session) {
+                              alert('Você precisa criar uma conta primeiro para vincular o seu acesso Premium!');
+                              navigate('/login');
+                            } else {
+                              navigate('/planos');
+                            }
+                          });
+                        }}
+                      >
+                        Desbloquear Agora
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+              )}
+
             </div>
           );
         })}

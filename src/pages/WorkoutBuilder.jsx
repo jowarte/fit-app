@@ -27,6 +27,8 @@ export function WorkoutBuilder() {
   
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
 
   useEffect(() => {
     async function checkAccessAndFetchLibrary() {
@@ -181,8 +183,10 @@ export function WorkoutBuilder() {
   }
 
   const hasCreateAccess = checkUserPermission(userProfile, 'access_create');
+  const hasHomeAccessGlobal = checkUserPermission(userProfile, 'access_home');
+  const canEnterBuilder = hasCreateAccess || hasHomeAccessGlobal;
 
-  if (!hasCreateAccess) {
+  if (!canEnterBuilder) {
     return (
       <div className="container animate-fade-in" style={{ paddingTop: '5rem', paddingBottom: '6rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <div className="glass-card" style={{ width: '100%', maxWidth: '450px', padding: '2.5rem', textAlign: 'center', border: '1px solid rgba(255, 176, 32, 0.2)' }}>
@@ -367,9 +371,22 @@ export function WorkoutBuilder() {
           <div style={{ padding: '1.5rem', flex: 1 }}>
             {libraryLoading ? (
               <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>Carregando biblioteca...</div>
-            ) : (
-              <>
-                {!selectedCategory ? (
+            ) : (() => {
+                const hasHomeAccess = checkUserPermission(userProfile, 'access_home');
+                const hasGymAccess = checkUserPermission(userProfile, 'access_gym');
+                const hasAdvancedAccess = checkUserPermission(userProfile, 'access_advanced');
+                
+                const filteredLibrary = libraryExercises.filter(ex => {
+                  if (ex.name === '_FOLDER_META_' || ex.name === '_FOLDER_BLOCKED_') return false;
+                  const cat = ex.muscle_group;
+                  if (cat === 'Treino em Casa') return hasHomeAccess;
+                  if (cat === 'Treino Avançado') return hasAdvancedAccess;
+                  return hasGymAccess; // Outras categorias requerem acesso de academia
+                });
+
+                return (
+                  <>
+                    {!selectedCategory ? (
                   <>
                     <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
                       <Search size={20} color="var(--text-secondary)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
@@ -384,7 +401,7 @@ export function WorkoutBuilder() {
 
                     {searchQuery ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        {libraryExercises.filter(ex => ex.name.toLowerCase().includes(searchQuery.toLowerCase()) && ex.name !== '_FOLDER_META_' && ex.name !== '_FOLDER_BLOCKED_').map(ex => (
+                        {filteredLibrary.filter(ex => ex.name.toLowerCase().includes(searchQuery.toLowerCase())).map(ex => (
                           <div key={ex.id} className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                               <div>
@@ -411,7 +428,7 @@ export function WorkoutBuilder() {
                             )}
                           </div>
                         ))}
-                        {libraryExercises.filter(ex => ex.name.toLowerCase().includes(searchQuery.toLowerCase()) && ex.name !== '_FOLDER_META_' && ex.name !== '_FOLDER_BLOCKED_').length === 0 && (
+                        {filteredLibrary.filter(ex => ex.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
                           <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
                             Nenhum exercício encontrado com "{searchQuery}".
                           </div>
@@ -419,8 +436,8 @@ export function WorkoutBuilder() {
                       </div>
                     ) : (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
-                        {[...new Set(libraryExercises.filter(ex => ex.name !== '_FOLDER_META_' && ex.name !== '_FOLDER_BLOCKED_').map(ex => ex.muscle_group).filter(Boolean))].sort().map(cat => {
-                          const count = libraryExercises.filter(e => e.muscle_group === cat && e.name !== '_FOLDER_META_' && e.name !== '_FOLDER_BLOCKED_').length;
+                        {[...new Set(filteredLibrary.map(ex => ex.muscle_group).filter(Boolean))].sort().map(cat => {
+                          const count = filteredLibrary.filter(e => e.muscle_group === cat).length;
                           return (
                             <div 
                               key={cat}
@@ -438,49 +455,101 @@ export function WorkoutBuilder() {
                     )}
                   </>
                 ) : (
-                  <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                      <button onClick={() => setSelectedCategory(null)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', padding: '0.5rem', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                        <ArrowLeft size={24} />
-                      </button>
-                      <h3 style={{ margin: 0 }}>{selectedCategory}</h3>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                      {libraryExercises.filter(ex => ex.muscle_group === selectedCategory && ex.name !== '_FOLDER_META_' && ex.name !== '_FOLDER_BLOCKED_').map(ex => (
-                        <div key={ex.id} className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h4 style={{ margin: 0, fontSize: '1.1rem' }}>{ex.name}</h4>
-                            <button 
-                              onClick={() => selectLibraryExercise(ex)} 
-                              className="btn btn-primary" 
-                              style={{ 
-                                padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem',
-                                background: selectedExIds[ex.id] ? '#00ff88' : 'var(--primary-color)',
-                                color: selectedExIds[ex.id] ? '#000' : 'inherit',
-                                transition: 'all 0.2s'
-                              }}
-                            >
-                              <Check size={16} /> {selectedExIds[ex.id] ? 'Adicionado' : 'Selecionar'}
+                  (() => {
+                    const isPremiumUser = userProfile?.is_premium === true || userProfile?.role === 'super_admin' || userProfile?.role === 'admin';
+                    return (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <button onClick={() => setSelectedCategory(null)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', padding: '0.5rem', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                              <ArrowLeft size={24} />
                             </button>
+                            <h3 style={{ margin: 0 }}>{selectedCategory}</h3>
                           </div>
-                          {ex.media_url && (
-                            <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
-                              <VideoPlayer type={ex.media_type} url={ex.media_url} title={ex.name} />
+                          
+                          <button 
+                            onClick={() => setViewMode(prev => prev === 'list' ? 'grid' : 'list')}
+                            style={{ 
+                              background: 'rgba(168, 85, 247, 0.2)', border: '1px solid rgba(168, 85, 247, 0.5)', 
+                              color: '#e9d5ff', padding: '0.4rem 0.8rem', borderRadius: '12px', 
+                              cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' 
+                            }}
+                          >
+                            <LayoutGrid size={16} />
+                            {viewMode === 'list' ? 'Minimizar Previews' : 'Expandir Vídeos'}
+                          </button>
+                        </div>
+
+                        <div style={{ 
+                          display: viewMode === 'grid' ? 'grid' : 'flex', 
+                          flexDirection: viewMode === 'grid' ? 'row' : 'column', 
+                          gridTemplateColumns: viewMode === 'grid' ? '1fr 1fr' : 'none',
+                          gap: '1rem' 
+                        }}>
+                          {filteredLibrary.filter(ex => ex.muscle_group === selectedCategory).map(ex => {
+                            const isLocked = ex.is_premium && !isPremiumUser;
+                            
+                            return (
+                              <div key={ex.id} className="glass-card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.8rem', position: 'relative' }}>
+                                <div style={{ display: 'flex', flexDirection: viewMode === 'grid' ? 'column' : 'row', justifyContent: 'space-between', alignItems: viewMode === 'grid' ? 'flex-start' : 'center', gap: '0.8rem' }}>
+                                  <h4 style={{ margin: 0, fontSize: '0.95rem', color: isLocked ? 'var(--text-secondary)' : 'white', display: 'flex', alignItems: 'center', gap: '0.5rem', lineHeight: '1.3' }}>
+                                    {isLocked && <Lock size={14} color="#ffc107" />}
+                                    {ex.name}
+                                  </h4>
+                                  {isLocked ? (
+                                    <button 
+                                      onClick={() => window.location.href = '/planos'} 
+                                      className="btn" 
+                                      style={{ padding: '0.4rem 0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', fontSize: '0.75rem', background: 'rgba(168, 85, 247, 0.2)', border: '1px solid rgba(168, 85, 247, 0.5)', color: '#e9d5ff', width: viewMode === 'grid' ? '100%' : 'auto' }}
+                                    >
+                                      Desbloquear
+                                    </button>
+                                  ) : (
+                                    <button 
+                                      onClick={() => selectLibraryExercise(ex)} 
+                                      className="btn btn-primary" 
+                                      style={{ 
+                                        padding: '0.4rem 0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', fontSize: '0.75rem',
+                                        background: selectedExIds[ex.id] ? '#00ff88' : 'var(--primary-color)',
+                                        color: selectedExIds[ex.id] ? '#000' : 'inherit',
+                                        transition: 'all 0.2s',
+                                        width: viewMode === 'grid' ? '100%' : 'auto'
+                                      }}
+                                    >
+                                      <Check size={14} /> {selectedExIds[ex.id] ? 'Adicionado' : 'Selecionar'}
+                                    </button>
+                                  )}
+                                </div>
+                                
+                                {ex.media_url && viewMode === 'list' && (
+                                  <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <div style={{ filter: isLocked ? 'blur(20px)' : 'none', transition: 'filter 0.3s', pointerEvents: isLocked ? 'none' : 'auto', userSelect: isLocked ? 'none' : 'auto' }}>
+                                      <VideoPlayer type={ex.media_type} url={ex.media_url} title={ex.name} />
+                                    </div>
+                                    {isLocked && (
+                                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.75)', zIndex: 10 }}>
+                                        <Lock size={32} color="#ffc107" style={{ marginBottom: '0.5rem' }} />
+                                        <h4 style={{ margin: 0, color: 'white', textAlign: 'center' }}>Exclusivo Pro</h4>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                          {filteredLibrary.filter(ex => ex.muscle_group === selectedCategory).length === 0 && (
+                            <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
+                              Nenhum exercício nesta categoria.
                             </div>
                           )}
                         </div>
-                      ))}
-                      {libraryExercises.filter(ex => ex.muscle_group === selectedCategory && ex.name !== '_FOLDER_META_' && ex.name !== '_FOLDER_BLOCKED_').length === 0 && (
-                        <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
-                          Nenhum exercício nesta categoria.
-                        </div>
-                      )}
-                    </div>
-                  </>
+                      </>
+                    );
+                  })()
                 )}
               </>
-            )}
+            );
+          })()}
           </div>
         </div>
       )}

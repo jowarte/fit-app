@@ -7,10 +7,7 @@ export function NotificationCenter() {
   const [notifications, setNotifications] = useState([]);
   const location = useLocation();
 
-  // Ocultar em telas de admin, login ou planos
-  if (location.pathname.startsWith('/admin') || location.pathname === '/login' || location.pathname === '/planos') {
-    return null;
-  }
+
 
   // Carregar notificações do localStorage
   useEffect(() => {
@@ -58,6 +55,11 @@ export function NotificationCenter() {
       clearInterval(interval);
     };
   }, []);
+
+  // Ocultar em telas de admin, login ou planos
+  if (location.pathname.startsWith('/admin') || location.pathname === '/login' || location.pathname === '/planos') {
+    return null;
+  }
 
   // Filtra apenas as notificações cuja data já passou ou é o momento atual
   const activeNotifications = notifications.filter(n => new Date(n.date) <= new Date());
