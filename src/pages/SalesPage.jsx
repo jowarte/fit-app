@@ -141,6 +141,44 @@ export function SalesPage() {
         </div>
       </section>
 
+      {/* BLOCO 3.5: Visualização Muscular */}
+      <section style={{ padding: '6rem 5%', background: 'linear-gradient(180deg, rgba(255,255,255,0.02) 0%, var(--bg-dark) 100%)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ display: 'inline-block', background: 'rgba(0, 255, 136, 0.1)', color: '#00ff88', padding: '0.5rem 1.5rem', borderRadius: '30px', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '1.5rem', border: '1px solid rgba(0,255,136,0.2)' }}>
+            MÁXIMA PRECISÃO ANATÔMICA
+          </div>
+          <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem', lineHeight: 1.2 }}>
+            Sinta o músculo certo, <span style={{ color: 'var(--primary-color)' }}>no momento exato.</span>
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '800px', margin: '0 auto 4rem auto', lineHeight: 1.6 }}>
+            Chega de treinar "no escuro" e adivinhar se o movimento está correto. O <strong>TreinoApp</strong> traz vídeos que destacam os grupos musculares exatos que você está ativando. Você vai treinar com a consciência de um atleta de alta performance, maximizando seus resultados e evitando lesões.
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
+            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
+                <img src="/muscles/1.gif" alt="Anatomia Muscular 1" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </div>
+            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
+                <img src="/muscles/2.gif" alt="Anatomia Muscular 2" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </div>
+            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
+                <img src="/muscles/3.gif" alt="Anatomia Muscular 3" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </div>
+            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
+                <img src="/muscles/4.gif" alt="Anatomia Muscular 4" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* BLOCO 4: Pricing / Planos (Dynamic) */}
       <section id="planos" style={{ padding: '6rem 5%' }}>
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
