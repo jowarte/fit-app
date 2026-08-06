@@ -10,24 +10,10 @@ export function SalesPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    // Injetar FB Pixel se configurado no banco
-    async function injectPixel() {
-      const { data } = await supabase.from('app_settings').select('fb_pixel').eq('id', 1).single();
-      if (data && data.fb_pixel) {
-        const pixelId = data.fb_pixel;
-        !function(f,b,e,v,n,t,s)
-        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-        window.fbq('init', pixelId);
-        window.fbq('track', 'PageView');
-      }
+    // Acionar evento de PageView para o Facebook Pixel
+    if (window.fbq) {
+      window.fbq('track', 'PageView');
     }
-    injectPixel();
 
     const saved = localStorage.getItem('admin_plans');
     if (saved) {
