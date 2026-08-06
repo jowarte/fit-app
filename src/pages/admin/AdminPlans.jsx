@@ -36,8 +36,21 @@ export function AdminPlans() {
       if (error) {
         console.error('Erro ao carregar planos:', error);
       } else if (data && data.length > 0) {
-        // Converter features jsonb de volta para array se necessario (o Supabase já retorna array se inserido array)
-        setPlans(data);
+        // Mapeia do banco (snake_case) para a interface (camelCase)
+        const mappedPlans = data.map(plan => ({
+          ...plan,
+          checkoutUrl: plan.checkout_url,
+          isVisible: plan.is_visible,
+          isRecommended: plan.is_recommended,
+          isTrial: plan.is_trial,
+          trialDays: plan.trial_days,
+          accessHome: plan.access_home,
+          accessGym: plan.access_gym,
+          accessCreate: plan.access_create,
+          accessWhatsapp: plan.access_whatsapp,
+          accessAdvanced: plan.access_advanced,
+        }));
+        setPlans(mappedPlans);
       } else {
         // Fallback para planos padrão se a tabela estiver vazia
         const defaultPlans = [
