@@ -194,10 +194,13 @@ export function CategoriesPage() {
             const meta = folderMetas.find(m => m.muscle_group === cat);
             const isHome = cat === 'Treino em Casa';
             const isAdvanced = cat === 'Treino Avançado';
+            const isGym = cat === 'Treino Academia';
+            
             let hasCatAccess = false;
             if (isHome) hasCatAccess = checkUserPermission(userProfile, 'access_home');
             else if (isAdvanced) hasCatAccess = checkUserPermission(userProfile, 'access_advanced');
-            else hasCatAccess = checkUserPermission(userProfile, 'access_gym');
+            else if (isGym) hasCatAccess = checkUserPermission(userProfile, 'access_gym');
+            else hasCatAccess = checkUserPermission(userProfile, 'access_home') || checkUserPermission(userProfile, 'access_gym');
             
             const isPremiumUser = userProfile?.is_premium === true || userProfile?.role === 'super_admin' || userProfile?.role === 'admin';
             let isLocked = !hasCatAccess;
@@ -326,11 +329,13 @@ export function CategoriesPage() {
         {categoryExercises.map(ex => {
           const isHome = selectedCategory === 'Treino em Casa';
           const isAdvanced = selectedCategory === 'Treino Avançado';
+          const isGym = selectedCategory === 'Treino Academia';
           
           let hasCategoryAccess = false;
           if (isHome) hasCategoryAccess = checkUserPermission(userProfile, 'access_home');
           else if (isAdvanced) hasCategoryAccess = checkUserPermission(userProfile, 'access_advanced');
-          else hasCategoryAccess = checkUserPermission(userProfile, 'access_gym');
+          else if (isGym) hasCategoryAccess = checkUserPermission(userProfile, 'access_gym');
+          else hasCategoryAccess = checkUserPermission(userProfile, 'access_home') || checkUserPermission(userProfile, 'access_gym');
           
           const isPremiumUser = userProfile?.is_premium === true || userProfile?.role === 'super_admin' || userProfile?.role === 'admin';
           

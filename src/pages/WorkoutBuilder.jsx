@@ -490,49 +490,103 @@ export function WorkoutBuilder() {
                             const isLocked = ex.is_premium && !isPremiumUser;
                             
                             return (
-                              <div key={ex.id} className="glass-card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.8rem', position: 'relative' }}>
-                                <div style={{ display: 'flex', flexDirection: viewMode === 'grid' ? 'column' : 'row', justifyContent: 'space-between', alignItems: viewMode === 'grid' ? 'flex-start' : 'center', gap: '0.8rem' }}>
-                                  <h4 style={{ margin: 0, fontSize: '0.95rem', color: isLocked ? 'var(--text-secondary)' : 'white', display: 'flex', alignItems: 'center', gap: '0.5rem', lineHeight: '1.3' }}>
-                                    {isLocked && <Lock size={14} color="#ffc107" />}
-                                    {ex.name}
-                                  </h4>
-                                  {isLocked ? (
-                                    <button 
-                                      onClick={() => window.location.href = '/planos'} 
-                                      className="btn" 
-                                      style={{ padding: '0.4rem 0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', fontSize: '0.75rem', background: 'rgba(168, 85, 247, 0.2)', border: '1px solid rgba(168, 85, 247, 0.5)', color: '#e9d5ff', width: viewMode === 'grid' ? '100%' : 'auto' }}
-                                    >
-                                      Desbloquear
-                                    </button>
-                                  ) : (
-                                    <button 
-                                      onClick={() => selectLibraryExercise(ex)} 
-                                      className="btn btn-primary" 
-                                      style={{ 
-                                        padding: '0.4rem 0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', fontSize: '0.75rem',
-                                        background: selectedExIds[ex.id] ? '#00ff88' : 'var(--primary-color)',
-                                        color: selectedExIds[ex.id] ? '#000' : 'inherit',
-                                        transition: 'all 0.2s',
-                                        width: viewMode === 'grid' ? '100%' : 'auto'
-                                      }}
-                                    >
-                                      <Check size={14} /> {selectedExIds[ex.id] ? 'Adicionado' : 'Selecionar'}
-                                    </button>
-                                  )}
-                                </div>
+                              <div key={ex.id} className="glass-card" style={{ 
+                                padding: viewMode === 'grid' ? '0' : '1rem', 
+                                display: 'flex', flexDirection: 'column', 
+                                gap: viewMode === 'grid' ? '0' : '0.8rem', 
+                                position: 'relative', overflow: 'hidden' 
+                              }}>
                                 
-                                {ex.media_url && viewMode === 'list' && (
-                                  <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <div style={{ filter: isLocked ? 'blur(20px)' : 'none', transition: 'filter 0.3s', pointerEvents: isLocked ? 'none' : 'auto', userSelect: isLocked ? 'none' : 'auto' }}>
-                                      <VideoPlayer type={ex.media_type} url={ex.media_url} title={ex.name} />
+                                {/* MODO GRID */}
+                                {viewMode === 'grid' && (
+                                  <div style={{ position: 'relative', width: '100%' }}>
+                                    {ex.media_url ? (
+                                      <div style={{ 
+                                        position: 'relative', width: '100%', paddingBottom: '100%',
+                                        background: '#111', filter: isLocked ? 'blur(8px)' : 'none',
+                                        transition: 'filter 0.3s'
+                                      }}>
+                                        {ex.media_type === 'gif' || ex.media_type === 'local_video' ? (
+                                          <img src={ex.media_url} alt={ex.name} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'linear-gradient(135deg, #1a1a2e, #16213e)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <span style={{ fontSize: '2.5rem' }}>🎬</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <div style={{ width: '100%', paddingBottom: '100%', position: 'relative', background: 'rgba(255,255,255,0.04)' }}>
+                                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                          <span style={{ fontSize: '2rem' }}>💪</span>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Gradient and Title */}
+                                    <div style={{
+                                      position: 'absolute', bottom: 0, left: 0, right: 0,
+                                      background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 50%, transparent 100%)',
+                                      padding: '2rem 0.6rem 0.6rem', display: 'flex', flexDirection: 'column', gap: '0.5rem'
+                                    }}>
+                                      <h4 style={{ margin: 0, fontSize: '0.75rem', color: isLocked ? '#aaa' : 'white', lineHeight: '1.2', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                        {isLocked && '🔒 '}{ex.name}
+                                      </h4>
+                                      
+                                      {/* Action Button */}
+                                      {isLocked ? (
+                                        <button onClick={() => window.location.href = '/planos'} className="btn" style={{ padding: '0.4rem', width: '100%', fontSize: '0.7rem', background: 'rgba(168, 85, 247, 0.2)', border: '1px solid rgba(168, 85, 247, 0.5)', color: '#e9d5ff' }}>
+                                          Desbloquear
+                                        </button>
+                                      ) : (
+                                        <button onClick={() => selectLibraryExercise(ex)} className="btn btn-primary" style={{ padding: '0.4rem', width: '100%', fontSize: '0.7rem', background: selectedExIds[ex.id] ? '#00ff88' : 'var(--primary-color)', color: selectedExIds[ex.id] ? '#000' : 'inherit', border: 'none' }}>
+                                          {selectedExIds[ex.id] ? '✓ Adicionado' : 'Selecionar'}
+                                        </button>
+                                      )}
                                     </div>
+                                    
+                                    {/* Lock Overlay */}
                                     {isLocked && (
-                                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.75)', zIndex: 10 }}>
-                                        <Lock size={32} color="#ffc107" style={{ marginBottom: '0.5rem' }} />
-                                        <h4 style={{ margin: 0, color: 'white', textAlign: 'center' }}>Exclusivo Pro</h4>
+                                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.45)', zIndex: 5, pointerEvents: 'none' }}>
+                                        <Lock size={28} color="#ffc107" />
+                                        <span style={{ fontSize: '0.65rem', color: '#ffc107', fontWeight: 'bold', marginTop: '0.3rem' }}>PRO</span>
                                       </div>
                                     )}
                                   </div>
+                                )}
+
+                                {/* MODO LISTA */}
+                                {viewMode === 'list' && (
+                                  <>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.8rem' }}>
+                                      <h4 style={{ margin: 0, fontSize: '0.95rem', color: isLocked ? 'var(--text-secondary)' : 'white', display: 'flex', alignItems: 'center', gap: '0.5rem', lineHeight: '1.3' }}>
+                                        {isLocked && <Lock size={14} color="#ffc107" />}
+                                        {ex.name}
+                                      </h4>
+                                      {isLocked ? (
+                                        <button onClick={() => window.location.href = '/planos'} className="btn" style={{ padding: '0.4rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', background: 'rgba(168, 85, 247, 0.2)', border: '1px solid rgba(168, 85, 247, 0.5)', color: '#e9d5ff' }}>
+                                          Desbloquear
+                                        </button>
+                                      ) : (
+                                        <button onClick={() => selectLibraryExercise(ex)} className="btn btn-primary" style={{ padding: '0.4rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', background: selectedExIds[ex.id] ? '#00ff88' : 'var(--primary-color)', color: selectedExIds[ex.id] ? '#000' : 'inherit' }}>
+                                          <Check size={14} /> {selectedExIds[ex.id] ? 'Adicionado' : 'Selecionar'}
+                                        </button>
+                                      )}
+                                    </div>
+                                    
+                                    {ex.media_url && (
+                                      <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <div style={{ filter: isLocked ? 'blur(20px)' : 'none', transition: 'filter 0.3s', pointerEvents: isLocked ? 'none' : 'auto', userSelect: isLocked ? 'none' : 'auto' }}>
+                                          <VideoPlayer type={ex.media_type} url={ex.media_url} title={ex.name} />
+                                        </div>
+                                        {isLocked && (
+                                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.75)', zIndex: 10 }}>
+                                            <Lock size={32} color="#ffc107" style={{ marginBottom: '0.5rem' }} />
+                                            <h4 style={{ margin: 0, color: 'white', textAlign: 'center' }}>Exclusivo Pro</h4>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             );

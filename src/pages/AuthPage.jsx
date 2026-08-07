@@ -91,23 +91,33 @@ export function AuthPage() {
 
           await supabase.from('profiles').update(updateData).eq('id', data.user.id);
 
-          // Avisa o n8n sobre o novo cadastro
+          // Avisa o n8n e Bot Vende sobre o novo cadastro
           try {
-            const { data: settings } = await supabase.from('app_settings').select('n8n_webhook_url').eq('id', 1).single();
-            if (settings && settings.n8n_webhook_url) {
-              fetch(settings.n8n_webhook_url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                  event: 'user_registered', 
-                  email: email, 
-                  phone: phone,
-                  name: name
-                })
-              }).catch(console.error);
+            const { data: settings } = await supabase.from('app_settings').select('n8n_webhook_url, bot_vende_webhook_url').eq('id', 1).single();
+            if (settings) {
+              const payload = {
+                event: 'user_registered', 
+                email: email, 
+                phone: phone,
+                name: name
+              };
+
+              // Envia para o n8n
+              if (settings.n8n_webhook_url) {
+                supabase.functions.invoke('send-webhook', {
+                  body: { url: settings.n8n_webhook_url, payload }
+                }).catch(console.error);
+              }
+
+              // Envia para o Bot Vende (Noé)
+              if (settings.bot_vende_webhook_url) {
+                supabase.functions.invoke('send-webhook', {
+                  body: { url: settings.bot_vende_webhook_url, payload }
+                }).catch(console.error);
+              }
             }
           } catch(err) {
-            console.error("Erro ao buscar config n8n", err);
+            console.error("Erro ao buscar config de webhooks", err);
           }
         }
         setMessage('Cadastro realizado com sucesso! Faça login para continuar.');
