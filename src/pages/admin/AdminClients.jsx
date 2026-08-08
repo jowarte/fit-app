@@ -170,8 +170,7 @@ export function AdminClients() {
       access_home_override: formData.access_home_override,
       access_gym_override: formData.access_gym_override,
       access_create_override: formData.access_create_override,
-      access_whatsapp_override: formData.access_whatsapp_override,
-      password: formData.password || null
+      access_whatsapp_override: formData.access_whatsapp_override
     };
 
     try {

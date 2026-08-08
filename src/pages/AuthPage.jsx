@@ -120,7 +120,7 @@ export function AuthPage() {
             console.error("Erro ao buscar config de webhooks", err);
           }
         }
-        setMessage('Cadastro realizado com sucesso! Faça login para continuar.');
+        setMessage('Cadastro realizado com sucesso! Verifique sua caixa de entrada e confirme seu e-mail antes de fazer login.');
         setIsLogin(true);
       }
     }
