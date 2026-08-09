@@ -200,7 +200,7 @@ export function CategoriesPage() {
             if (isHome) hasCatAccess = checkUserPermission(userProfile, 'access_home');
             else if (isAdvanced) hasCatAccess = checkUserPermission(userProfile, 'access_advanced');
             else if (isGym) hasCatAccess = checkUserPermission(userProfile, 'access_gym');
-            else hasCatAccess = checkUserPermission(userProfile, 'access_home') || checkUserPermission(userProfile, 'access_gym');
+            else hasCatAccess = checkUserPermission(userProfile, 'access_gym');
             
             const isPremiumUser = userProfile?.is_premium === true || userProfile?.role === 'super_admin' || userProfile?.role === 'admin';
             let isLocked = !hasCatAccess;
@@ -335,7 +335,7 @@ export function CategoriesPage() {
           if (isHome) hasCategoryAccess = checkUserPermission(userProfile, 'access_home');
           else if (isAdvanced) hasCategoryAccess = checkUserPermission(userProfile, 'access_advanced');
           else if (isGym) hasCategoryAccess = checkUserPermission(userProfile, 'access_gym');
-          else hasCategoryAccess = checkUserPermission(userProfile, 'access_home') || checkUserPermission(userProfile, 'access_gym');
+          else hasCategoryAccess = checkUserPermission(userProfile, 'access_gym');
           
           const isPremiumUser = userProfile?.is_premium === true || userProfile?.role === 'super_admin' || userProfile?.role === 'admin';
           
@@ -460,12 +460,10 @@ export function CategoriesPage() {
                     }}>
                       <Lock size={48} color="#ffc107" style={{ marginBottom: '1rem' }} />
                       <h3 style={{ margin: '0 0 0.5rem 0', color: 'white', textAlign: 'center', fontSize: '1.1rem' }}>
-                        {userProfile?.status === 'trial' ? 'Indisponível no Teste' : 'Conteúdo Exclusivo Pro'}
+                        Conteúdo Exclusivo Pro
                       </h3>
                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', textAlign: 'center', maxWidth: '85%', marginBottom: '1rem', marginTop: 0 }}>
-                        {userProfile?.status === 'trial' 
-                          ? 'Essa funcionalidade não está inclusa no seu período de teste. Assine um plano para liberar!' 
-                          : 'Acesse essa categoria assinando um de nossos planos.'}
+                        Acesse essa categoria assinando um de nossos planos.
                       </p>
                       <button 
                         className="btn btn-primary" 

@@ -1,8 +1,8 @@
 export const DEFAULT_PLANS = [
   {
     id: '1', name: 'Free (Iniciante)', price: '0,00', cycle: 'Mensal', isRecommended: false,
-    accessHome: true, accessGym: false, accessCreate: false, accessWhatsapp: false,
-    features: ['Acesso ao Treino em Casa', 'Diário de Treino Básico']
+    accessHome: false, accessGym: false, accessCreate: false, accessWhatsapp: false,
+    features: ['Diário de Treino Básico']
   },
   {
     id: '2', name: 'PRO (Recomendado)', price: '29,90', cycle: 'Mensal', isRecommended: true,
@@ -63,9 +63,9 @@ export function checkUserPermission(profile, permissionKey) {
   }
 
   // Para usuários gratuitos não premium sem overrides de liberação:
-  // Só o treino em casa (access_home) é liberado por padrão no plano gratuito clássico
+  // Agora o treino em casa também está bloqueado por padrão no modo free
   if (permissionKey === 'access_home') {
-    return true;
+    return false;
   }
 
   return false;
