@@ -40,6 +40,10 @@ export function OnboardingModal({ userId, userName, onComplete }) {
         .eq('id', userId);
 
       if (error) throw error;
+      
+      // Dispara o evento para o InstallPrompt
+      window.dispatchEvent(new Event('triggerInstallPrompt'));
+      
       onComplete();
     } catch (err) {
       console.error('Erro ao salvar onboarding:', err);

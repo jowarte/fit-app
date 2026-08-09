@@ -656,41 +656,7 @@ function App() {
   return (
     <Router>
       <div className="app-container">
-        {isTrial && !isAdminPath && (
-          <div style={{
-            background: 'linear-gradient(135deg, #ffb020, #ff8c00)',
-            color: 'black',
-            padding: '0.5rem 1rem',
-            textAlign: 'center',
-            fontSize: '0.85rem',
-            fontWeight: '700',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '0.5rem',
-            zIndex: 99,
-            boxShadow: '0 4px 12px rgba(255, 176, 32, 0.2)'
-          }}>
-            <span>Você está no Período de Teste. Resta{remainingDays === 1 ? ' apenas' : ''} <strong>{remainingDays} dia{remainingDays > 1 ? 's' : ''}</strong> de acesso.</span>
-            <button 
-              onClick={() => window.location.href = '/planos'}
-              style={{
-                background: 'black',
-                color: '#ffb020',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '0.2rem 0.6rem',
-                fontSize: '0.7rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                marginLeft: '0.5rem',
-                textTransform: 'uppercase'
-              }}
-            >
-              Assinar Plano
-            </button>
-          </div>
-        )}
+
         <main>
           <Routes>
             <Route path="/" element={<HomePage />} />

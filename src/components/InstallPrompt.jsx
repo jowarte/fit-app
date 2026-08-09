@@ -21,25 +21,43 @@ export function InstallPrompt() {
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     setIsIOS(isIosDevice);
 
-    if (isIosDevice) {
-      // Show immediately for iOS since they don't have beforeinstallprompt
-      // Wait a few seconds to not be too aggressive
-      setTimeout(() => setShowPrompt(true), 3000);
-    }
-
     // Android/Chrome event
     const handleBeforeInstallPrompt = (e) => {
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
       // Stash the event so it can be triggered later.
       setDeferredPrompt(e);
-      // Update UI notify the user they can install the PWA
-      setShowPrompt(true);
+      
+      // Se não for o primeiro acesso (já preencheu os dados), 
+      // podemos mostrar automaticamente após alguns segundos
+      setTimeout(() => {
+         const hasDismissed = localStorage.getItem('installPromptDismissed');
+         if (!hasDismissed) setShowPrompt(true);
+      }, 5000);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    const handleTrigger = () => {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      if (isStandalone) return;
+      setShowPrompt(true);
+    };
+
+    window.addEventListener('triggerInstallPrompt', handleTrigger);
+
+    if (isIosDevice) {
+      // Para iOS, mostra automaticamente após 5 segundos (se não foi dispensado)
+      setTimeout(() => {
+         const hasDismissed = localStorage.getItem('installPromptDismissed');
+         if (!hasDismissed) setShowPrompt(true);
+      }, 5000);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('triggerInstallPrompt', handleTrigger);
+    };
   }, []);
 
   const handleInstallClick = async () => {
