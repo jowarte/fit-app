@@ -26,6 +26,23 @@ export function AuthPage() {
     }
   }, [planId]);
 
+  function getFriendlyErrorMessage(err) {
+    const msg = err?.message || String(err || '');
+    if (msg.includes('Failed to fetch')) {
+      return 'Não foi possível conectar ao servidor. O projeto no Supabase pode estar pausado por inatividade ou sem conexão.';
+    }
+    if (msg.includes('Invalid login credentials')) {
+      return 'E-mail ou senha incorretos.';
+    }
+    if (msg.includes('User already registered')) {
+      return 'Este e-mail já está cadastrado no sistema.';
+    }
+    if (msg.includes('Email rate limit exceeded')) {
+      return 'Limite de envios atingido. Aguarde alguns minutos para tentar novamente.';
+    }
+    return msg;
+  }
+
   async function handleAuth(e) {
     e.preventDefault();
     setLoading(true);
@@ -37,7 +54,7 @@ export function AuthPage() {
         redirectTo: window.location.origin + '/reset-password',
       });
       if (error) {
-        setError(error.message);
+        setError(getFriendlyErrorMessage(error));
       } else {
         setMessage('E-mail de recuperação enviado! Verifique sua caixa de entrada.');
         setIsForgotPassword(false);
@@ -45,7 +62,7 @@ export function AuthPage() {
     } else if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        setError(error.message);
+        setError(getFriendlyErrorMessage(error));
       } else {
         navigate('/');
       }
@@ -61,7 +78,7 @@ export function AuthPage() {
         }
       });
       if (error) {
-        setError(error.message);
+        setError(getFriendlyErrorMessage(error));
       } else {
         // Atualiza a tabela profiles com o celular e o nome
         if (data?.user?.id) {

@@ -1,13 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, X, CheckCircle2, Trophy, Flame } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { Bell, X, CheckCircle2, Trophy, Flame, BookOpen, Download, Lock } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isEbooksOpen, setIsEbooksOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [profile, setProfile] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
-
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+        setProfile(data);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   // Carregar notificações do localStorage
   useEffect(() => {
@@ -112,6 +125,84 @@ export function NotificationCenter() {
           </span>
         )}
       </button>
+
+      {/* Botão de E-books (Fixo no topo direito, ao lado das notificações) */}
+      <button 
+        onClick={() => {
+          if (profile && (profile.status === 'active' || profile.is_premium)) {
+            setIsEbooksOpen(true);
+          } else {
+            // Se não tiver pago, redireciona ou mostra aviso
+            if (window.confirm('E-books são exclusivos para assinantes. Deseja ver os planos?')) {
+              navigate('/planos');
+            }
+          }
+        }}
+        style={{ 
+          position: 'fixed', top: '15px', right: '70px', zIndex: 50,
+          background: profile && (profile.status === 'active' || profile.is_premium) ? 'rgba(0,0,0,0.5)' : 'rgba(255,68,68,0.2)', 
+          border: profile && (profile.status === 'active' || profile.is_premium) ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(255,68,68,0.3)',
+          width: '45px', height: '45px', borderRadius: '50%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backdropFilter: 'blur(10px)', color: profile && (profile.status === 'active' || profile.is_premium) ? 'white' : '#ff4444', 
+          cursor: 'pointer'
+        }}
+        className="animate-scale"
+        title="Baixar E-books"
+      >
+        {profile && (profile.status === 'active' || profile.is_premium) ? <BookOpen size={22} /> : <Lock size={22} />}
+      </button>
+
+      {/* Modal de E-books */}
+      {isEbooksOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem' }}>
+          <div className="animate-fade-in glass-card" style={{ width: '100%', maxWidth: '400px', background: 'var(--bg-color)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', borderRadius: '12px' }}>
+            
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: '1.2rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <BookOpen size={20} /> Baixar E-books
+              </h2>
+              <button onClick={() => setIsEbooksOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                <X size={24} />
+              </button>
+            </div>
+
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 1rem 0' }}>Acesse seus materiais exclusivos e complemente seus resultados.</p>
+              
+              <a href="/midia/e-books/2026 anatomia da musculação.pdf" download target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}>
+                  <div>
+                    <h4 style={{ margin: '0 0 0.3rem 0', color: 'white' }}>Anatomia da Musculação</h4>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>PDF - Guia Completo</span>
+                  </div>
+                  <Download size={20} color="var(--primary-color)" />
+                </div>
+              </a>
+
+              <a href="/midia/e-books/GUIA DE SUPLEMENTOS.pdf" download target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}>
+                  <div>
+                    <h4 style={{ margin: '0 0 0.3rem 0', color: 'white' }}>Guia de Suplementos</h4>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>PDF - Potencialize seus resultados</span>
+                  </div>
+                  <Download size={20} color="var(--primary-color)" />
+                </div>
+              </a>
+
+              <a href="/midia/e-books/_GUIA VEGANO.pdf" download target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}>
+                  <div>
+                    <h4 style={{ margin: '0 0 0.3rem 0', color: 'white' }}>Guia Vegano</h4>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>PDF - Dicas e Receitas</span>
+                  </div>
+                  <Download size={20} color="var(--primary-color)" />
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Painel Lateral / Modal de Notificações */}
       {isOpen && (

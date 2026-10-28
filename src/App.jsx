@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Dumbbell, Home, Trophy, Settings, Play, Plus, Activity, Check, Copy, X, MessageCircle, Zap, Clock, User, Folder, ArrowLeft } from 'lucide-react';
 import { VideoPlayer } from './components/VideoPlayer';
 import { RestTimer } from './components/RestTimer';
@@ -33,11 +33,18 @@ import { PokasLayout } from './pages/PokasLayout';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import './App.css'; // Limpar o App.css se existir, usando apenas index.css
 
-function Navbar() {
+function ProtectedRoute({ session, children }) {
+  if (!session) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
+function Navbar({ session }) {
   const location = useLocation();
   const path = location.pathname;
 
-  if (path.startsWith('/admin') || path === '/planos' || path === '/login' || path.startsWith('/pokas')) {
+  if (!session || path.startsWith('/admin') || path === '/planos' || path === '/login' || path === '/reset-password' || path.startsWith('/pokas')) {
     return null;
   }
 
@@ -659,17 +666,20 @@ function App() {
 
         <main>
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/pokas/*" element={<PokasLayout />} />
-            <Route path="/exercicios" element={<CatalogPage />} />
-            <Route path="/treinar" element={<ActiveWorkoutPage />} />
-            <Route path="/treinos" element={<TreinosPage />} />
-            <Route path="/categorias" element={<CategoriesPage />} />
-            <Route path="/login" element={<AuthPage />} />
+            {/* Rotas Protegidas (Exigem Login) */}
+            <Route path="/" element={<ProtectedRoute session={session}><HomePage /></ProtectedRoute>} />
+            <Route path="/pokas/*" element={<ProtectedRoute session={session}><PokasLayout /></ProtectedRoute>} />
+            <Route path="/exercicios" element={<ProtectedRoute session={session}><CatalogPage /></ProtectedRoute>} />
+            <Route path="/treinar" element={<ProtectedRoute session={session}><ActiveWorkoutPage /></ProtectedRoute>} />
+            <Route path="/treinos" element={<ProtectedRoute session={session}><TreinosPage /></ProtectedRoute>} />
+            <Route path="/categorias" element={<ProtectedRoute session={session}><CategoriesPage /></ProtectedRoute>} />
+            <Route path="/montar-treino" element={<ProtectedRoute session={session}><WorkoutBuilder /></ProtectedRoute>} />
+            <Route path="/conquistas" element={<ProtectedRoute session={session}><ConquistasPage /></ProtectedRoute>} />
+            <Route path="/config" element={<ProtectedRoute session={session}><ConfigPage /></ProtectedRoute>} />
+
+            {/* Rotas Públicas */}
+            <Route path="/login" element={session ? <Navigate to="/" replace /> : <AuthPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/montar-treino" element={<WorkoutBuilder />} />
-            <Route path="/conquistas" element={<ConquistasPage />} />
-            <Route path="/config" element={<ConfigPage />} />
             <Route path="/planos" element={<SalesPage />} />
             
             {/* Admin Routes */}
@@ -684,10 +694,13 @@ function App() {
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="team" element={<AdminTeam />} />
             </Route>
+
+            {/* Redirecionamento padrão */}
+            <Route path="*" element={<Navigate to={session ? "/" : "/login"} replace />} />
           </Routes>
         </main>
-        <NotificationCenter />
-        <Navbar />
+        {session && <NotificationCenter />}
+        <Navbar session={session} />
         <InstallPrompt />
         {localStorage.getItem('simulated_plan_id') && (
           <button 
