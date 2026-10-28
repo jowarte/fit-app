@@ -83,11 +83,18 @@ export function AdminPlans() {
   };
 
   const handleEdit = (plan) => {
+    const CORE_FEATS = [
+      'Acesso ao Treino em Casa',
+      'Acesso ao Treino na Academia',
+      'Criar Treinos Personalizados',
+      'Lembretes via WhatsApp',
+      'Acesso ao Treino Avançado'
+    ];
     // Garantir que todos os campos existam para evitar undefined
     setFormData({
       ...plan,
       webhook_product_id: plan.webhook_product_id || '',
-      features: plan.features || []
+      features: (plan.features || []).filter(f => !CORE_FEATS.includes(f))
     });
     setNewFeature('');
     setIsEditing(true);
@@ -119,16 +126,15 @@ export function AdminPlans() {
       }
     }
     
-    // Auto-fill features if empty
-    if (finalData.features.length === 0) {
-      const autoFeat = [];
-      if (finalData.accessHome) autoFeat.push('Acesso ao Treino em Casa');
-      if (finalData.accessGym) autoFeat.push('Acesso ao Treino na Academia');
-      if (finalData.accessCreate) autoFeat.push('Criar Treinos Personalizados');
-      if (finalData.accessWhatsapp) autoFeat.push('Lembretes via WhatsApp');
-      if (finalData.accessAdvanced) autoFeat.push('Acesso ao Treino Avançado');
-      finalData.features = autoFeat;
-    }
+    // Garantir que a lista de benefícios extras não duplique os acessos core do app
+    const CORE_FEATS = [
+      'Acesso ao Treino em Casa',
+      'Acesso ao Treino na Academia',
+      'Criar Treinos Personalizados',
+      'Lembretes via WhatsApp',
+      'Acesso ao Treino Avançado'
+    ];
+    finalData.features = (finalData.features || []).filter(f => !CORE_FEATS.includes(f));
 
     // Convert camelCase to snake_case for DB is handled implicitly or we match column names.
     // In SQL script, columns are: id, name, price, cycle, checkout_url, is_visible, is_recommended, is_trial, trial_days, features, access_home, access_gym, access_create, access_whatsapp, access_advanced, webhook_product_id
@@ -403,9 +409,9 @@ export function AdminPlans() {
               </div>
             </div>
 
-            {/* Lista de Benefícios (Visual) */}
             <div>
-              <h4 style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', marginBottom: '1rem', marginTop: '2rem' }}>4. Lista de Benefícios (Visível pro usuário)</h4>
+              <h4 style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', marginBottom: '0.4rem', marginTop: '2rem' }}>4. Benefícios Extras Adicionais (Opcional)</h4>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 1rem 0' }}>Os itens marcados no passo 3 acima já aparecem automaticamente nos cards. Adicione aqui apenas vantagens adicionais se desejar (ex: Suporte 24h, Cardápio Nutricional, etc).</p>
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
                 <input 
                   type="text" 

@@ -317,10 +317,16 @@ export function SalesPage() {
                       <span style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.9)' }}>Lembretes via WhatsApp</span>
                     </div>
                   )}
+                  {plan.accessAdvanced && (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                      <CheckCircle2 size={22} color="var(--primary-color)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                      <span style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.9)' }}>Acesso ao Treino Avançado</span>
+                    </div>
+                  )}
 
-                  {/* Benefícios Customizados (filtrando duplicatas legadas) */}
+                  {/* Benefícios Customizados (filtrando duplicatas dos itens padrão) */}
                   {Array.isArray(plan.features) && plan.features
-                    .filter(feat => !['Acesso ao Treino em Casa', 'Acesso ao Treino na Academia', 'Criar Treinos Personalizados', 'Lembretes via WhatsApp', 'Diário de Treino Básico', 'Acesso Total (Casa e Academia)', 'Criação ilimitada de treinos', 'Lembretes automáticos via WhatsApp'].includes(feat))
+                    .filter(feat => !['Acesso ao Treino em Casa', 'Acesso ao Treino na Academia', 'Criar Treinos Personalizados', 'Lembretes via WhatsApp', 'Acesso ao Treino Avançado', 'Diário de Treino Básico', 'Acesso Total (Casa e Academia)', 'Criação ilimitada de treinos', 'Lembretes automáticos via WhatsApp'].includes(feat))
                     .map((feat, idx) => (
                     <div key={`custom-${idx}`} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
                       <CheckCircle2 size={22} color="var(--primary-color)" style={{ flexShrink: 0, marginTop: '2px' }} />
