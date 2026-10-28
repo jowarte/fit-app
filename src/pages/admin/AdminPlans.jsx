@@ -518,37 +518,7 @@ export function AdminPlans() {
                     </div>
                   ))}
                   
-                  {/* Benefícios barrados se não houver acesso */}
-                  {!plan.accessHome && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.9rem', opacity: 0.4 }}>
-                      <X size={18} color="var(--text-secondary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span style={{ textDecoration: 'line-through' }}>Acesso ao Treino em Casa</span>
-                    </div>
-                  )}
-                  {!plan.accessGym && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.9rem', opacity: 0.4 }}>
-                      <X size={18} color="var(--text-secondary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span style={{ textDecoration: 'line-through' }}>Acesso ao Treino na Academia</span>
-                    </div>
-                  )}
-                  {!plan.accessCreate && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.9rem', opacity: 0.4 }}>
-                      <X size={18} color="var(--text-secondary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span style={{ textDecoration: 'line-through' }}>Criar Treinos Personalizados</span>
-                    </div>
-                  )}
-                  {!plan.accessWhatsapp && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.9rem', opacity: 0.4 }}>
-                      <X size={18} color="var(--text-secondary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span style={{ textDecoration: 'line-through' }}>Lembretes via WhatsApp</span>
-                    </div>
-                  )}
-                  {!plan.accessAdvanced && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.9rem', opacity: 0.4 }}>
-                      <X size={18} color="var(--text-secondary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span style={{ textDecoration: 'line-through' }}>Acesso ao Treino Avançado</span>
-                    </div>
-                  )}
+                  {/* Benefícios Customizados */}
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem', marginBottom: '0.5rem' }}>

@@ -328,31 +328,7 @@ export function SalesPage() {
                     </div>
                   ))}
                   
-                  {/* Benefícios barrados se não houver acesso */}
-                  {!plan.accessHome && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', opacity: 0.3 }}>
-                      <X size={22} color="var(--text-secondary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span style={{ fontSize: '1.05rem', textDecoration: 'line-through' }}>Acesso ao Treino em Casa</span>
-                    </div>
-                  )}
-                  {!plan.accessGym && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', opacity: 0.3 }}>
-                      <X size={22} color="var(--text-secondary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span style={{ fontSize: '1.05rem', textDecoration: 'line-through' }}>Acesso à categoria Treino Academia</span>
-                    </div>
-                  )}
-                  {!plan.accessCreate && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', opacity: 0.3 }}>
-                      <X size={22} color="var(--text-secondary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span style={{ fontSize: '1.05rem', textDecoration: 'line-through' }}>Criação de Treinos Livres</span>
-                    </div>
-                  )}
-                  {!plan.accessWhatsapp && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', opacity: 0.3 }}>
-                      <X size={22} color="var(--text-secondary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span style={{ fontSize: '1.05rem', textDecoration: 'line-through' }}>Lembretes no WhatsApp</span>
-                    </div>
-                  )}
+                  {/* Fim dos Benefícios */}
                 </div>
 
                 <button 
