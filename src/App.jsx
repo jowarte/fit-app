@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { Dumbbell, Home, Trophy, Settings, Play, Plus, Activity, Check, Copy, X, MessageCircle, Zap, Clock, User, Folder, ArrowLeft, Trash2 } from 'lucide-react';
+import { Dumbbell, Home, Trophy, Settings, Play, Plus, Activity, Check, Copy, X, MessageCircle, Zap, Clock, User, Folder, ArrowLeft, Trash2, Megaphone } from 'lucide-react';
 import { VideoPlayer } from './components/VideoPlayer';
 import { RestTimer } from './components/RestTimer';
 import { WorkoutBuilder } from './pages/WorkoutBuilder';
@@ -16,6 +16,8 @@ import { AdminWhatsApp } from './pages/admin/AdminWhatsApp';
 import { AdminSalesLink } from './pages/admin/AdminSalesLink';
 import { AdminClients } from './pages/admin/AdminClients';
 import { AdminNotifications } from './pages/admin/AdminNotifications';
+import { AdminAnnouncements } from './pages/admin/AdminAnnouncements';
+import { AnnouncementsModal } from './components/AnnouncementsModal';
 import { AdminTeam } from './pages/admin/AdminTeam';
 import { ConfigPage } from './pages/ConfigPage';
 import { SalesPage } from './pages/SalesPage';
@@ -84,6 +86,7 @@ function HomePage() {
   // States para o histórico detalhado
   const [weeklyLogs, setWeeklyLogs] = React.useState([]);
   const [historyModalOpen, setHistoryModalOpen] = React.useState(false);
+  const [announcementsModalOpen, setAnnouncementsModalOpen] = React.useState(false);
   
   // States para Onboarding pós-cadastro
   const [showOnboarding, setShowOnboarding] = React.useState(false);
@@ -209,6 +212,45 @@ function HomePage() {
           </div>
         </div>
 
+        {/* Banner/Card de Anúncios e E-books para os alunos */}
+        <div 
+          onClick={() => setAnnouncementsModalOpen(true)}
+          className="glass-card animate-fade-in"
+          style={{
+            animationDelay: '0.3s',
+            marginTop: '1rem',
+            marginBottom: '1rem',
+            padding: '1.25rem',
+            background: 'linear-gradient(135deg, rgba(0, 210, 255, 0.1), rgba(168, 85, 247, 0.1))',
+            border: '1px solid rgba(0, 210, 255, 0.3)',
+            borderRadius: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            boxShadow: '0 4px 20px rgba(0, 210, 255, 0.1)'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ background: 'var(--primary-color)', padding: '0.8rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Megaphone size={24} color="#000" />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'white' }}>Mural de Anúncios & E-books</h4>
+                <span style={{ background: '#00ff88', color: '#000', fontSize: '0.65rem', fontWeight: 'bold', padding: '0.15rem 0.5rem', borderRadius: '10px' }}>NOVO</span>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                Avisos importantes, vídeos e materiais exclusivos em PDF
+              </p>
+            </div>
+          </div>
+          <span style={{ color: 'var(--primary-color)', fontSize: '1.2rem', fontWeight: 'bold' }}>➔</span>
+        </div>
+
         <div className="actions-grid animate-fade-in" style={{ animationDelay: '0.4s' }}>
           <Link to="/montar-treino" className="action-box" style={{ textDecoration: 'none' }}>
             <Plus size={32} />
@@ -222,6 +264,12 @@ function HomePage() {
           </Link>
         </div>
       </div>
+
+      {/* Modal de Anúncios e Entregáveis */}
+      <AnnouncementsModal 
+        isOpen={announcementsModalOpen} 
+        onClose={() => setAnnouncementsModalOpen(false)} 
+      />
 
       {/* Modal do Histórico Semanal */}
       {historyModalOpen && (
@@ -722,6 +770,7 @@ function App() {
               <Route path="settings" element={<AdminSettings />} />
               <Route path="whatsapp" element={<AdminWhatsApp />} />
               <Route path="clients" element={<AdminClients />} />
+              <Route path="announcements" element={<AdminAnnouncements />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="team" element={<AdminTeam />} />
             </Route>

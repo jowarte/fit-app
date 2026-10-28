@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Dumbbell, Users, Settings, MessageCircle, CreditCard, ShoppingCart, Bell, Lock, ShieldAlert, Home } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, Users, Settings, MessageCircle, CreditCard, ShoppingCart, Bell, Lock, ShieldAlert, Home, Megaphone } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 export function AdminLayout() {
@@ -232,6 +232,22 @@ export function AdminLayout() {
           </>
         )}
         
+        <Link 
+          to="/admin/announcements"
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0.75rem',
+            padding: '0.75rem 1rem',
+            borderRadius: '8px',
+            textDecoration: 'none',
+            color: path === '/admin/announcements' ? 'var(--bg-color)' : 'var(--text-color)',
+            background: path === '/admin/announcements' ? 'var(--primary-color)' : 'transparent',
+            transition: 'all 0.2s'
+          }}
+        >
+          <Megaphone size={20} />
+          <span>Anúncios & E-books</span>
+        </Link>
+
         <Link 
           to="/admin/notifications"
           style={{
