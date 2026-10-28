@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { Dumbbell, Home, Trophy, Settings, Play, Plus, Activity, Check, Copy, X, MessageCircle, Zap, Clock, User, Folder, ArrowLeft } from 'lucide-react';
+import { Dumbbell, Home, Trophy, Settings, Play, Plus, Activity, Check, Copy, X, MessageCircle, Zap, Clock, User, Folder, ArrowLeft, Trash2 } from 'lucide-react';
 import { VideoPlayer } from './components/VideoPlayer';
 import { RestTimer } from './components/RestTimer';
 import { WorkoutBuilder } from './pages/WorkoutBuilder';
@@ -324,6 +324,27 @@ function TreinosPage() {
     }
   };
 
+  const handleDeleteRoutine = async (routineId, routineName) => {
+    if (!window.confirm(`Tem certeza que deseja excluir o treino "${routineName}"?`)) return;
+    
+    try {
+      await supabase.from('routine_exercises').delete().eq('routine_id', routineId);
+      const { error } = await supabase.from('routines').delete().eq('id', routineId);
+      if (error) throw error;
+      
+      const updated = routines.filter(r => r.id !== routineId);
+      setRoutines(updated);
+      
+      const folderRemaining = updated.filter(r => (r.name.includes('|') ? r.name.split('|')[0] : 'Geral') === selectedFolder);
+      if (folderRemaining.length === 0) {
+        setSelectedFolder(null);
+      }
+    } catch (err) {
+      console.error('Erro ao excluir treino:', err);
+      alert('Erro ao excluir treino.');
+    }
+  };
+
   React.useEffect(() => {
     async function fetchRoutines() {
       try {
@@ -390,18 +411,28 @@ function TreinosPage() {
             const displayName = routine.name.includes('|') ? routine.name.split('|').slice(1).join('|') : routine.name;
             return (
             <div key={routine.id} className="glass-card animate-fade-in">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div>
                   <h3 style={{ color: 'var(--primary-color)', margin: '0 0 0.25rem 0' }}>{displayName}</h3>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>{routine.day_of_week}</p>
                 </div>
-                <button 
-                  onClick={() => { setRoutineToRepeat({...routine, displayName}); setRepeatModalOpen(true); }} 
-                  className="btn" 
-                  style={{ background: 'rgba(255,255,255,0.1)', color: 'white', padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid rgba(255,255,255,0.1)' }}
-                >
-                  <Copy size={16} /> Repetir
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button 
+                    onClick={() => { setRoutineToRepeat({...routine, displayName}); setRepeatModalOpen(true); }} 
+                    className="btn" 
+                    style={{ background: 'rgba(255,255,255,0.1)', color: 'white', padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid rgba(255,255,255,0.1)' }}
+                  >
+                    <Copy size={16} /> Repetir
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteRoutine(routine.id, displayName)} 
+                    className="btn" 
+                    style={{ background: 'rgba(255,68,68,0.15)', color: '#ff4444', padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid rgba(255,68,68,0.3)', cursor: 'pointer' }}
+                    title="Excluir este treino"
+                  >
+                    <Trash2 size={16} /> Excluir
+                  </button>
+                </div>
               </div>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
