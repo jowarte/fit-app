@@ -389,3 +389,78 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.user_exercises (id, user_id, name, muscle_group, equipment)
 VALUES ('a40804b3-7e0e-4b06-bed1-e69359ad1ca4', NULL, 'Abdominal Supra', 'Abdômen', 'Livre')
 ON CONFLICT (id) DO NOTHING;
+
+-- ==============================================================================
+-- 10. SUPER ADMINISTRADOR PADRÃO (SETUP INICIAL)
+-- Credenciais padrão:
+--   E-mail: admin@admin.com
+--   Senha:  admin123
+-- Após entrar no painel (/admin -> Configurações), você poderá alterar o e-mail e a senha!
+-- ==============================================================================
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+DO $$
+DECLARE
+  superadmin_id UUID := 'a0000000-0000-0000-0000-000000000001'::uuid;
+  admin_email TEXT := 'admin@admin.com';
+  admin_password TEXT := 'admin123';
+  target_user_id UUID;
+BEGIN
+  -- 1. Verifica se já existe um usuário com esse email no auth.users
+  SELECT id INTO target_user_id FROM auth.users WHERE email = admin_email;
+
+  IF target_user_id IS NULL THEN
+    -- Insere o usuário padrão no auth.users
+    INSERT INTO auth.users (
+      instance_id,
+      id,
+      aud,
+      role,
+      email,
+      encrypted_password,
+      email_confirmed_at,
+      raw_app_meta_data,
+      raw_user_meta_data,
+      created_at,
+      updated_at,
+      confirmation_token
+    ) VALUES (
+      '00000000-0000-0000-0000-000000000000',
+      superadmin_id,
+      'authenticated',
+      'authenticated',
+      admin_email,
+      crypt(admin_password, gen_salt('bf')),
+      NOW(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"name":"Super Administrador"}'::jsonb,
+      NOW(),
+      NOW(),
+      ''
+    );
+    target_user_id := superadmin_id;
+  ELSE
+    -- Se já existe, atualiza a senha para a padrão e garante email confirmado
+    UPDATE auth.users
+    SET 
+      encrypted_password = crypt(admin_password, gen_salt('bf')),
+      email_confirmed_at = COALESCE(email_confirmed_at, NOW()),
+      updated_at = NOW()
+    WHERE id = target_user_id;
+  END IF;
+
+  -- 2. Garante que o perfil em public.profiles tem nível 'super_admin' e está 'active'
+  INSERT INTO public.profiles (id, email, name, role, status)
+  VALUES (
+    target_user_id,
+    admin_email,
+    'Super Administrador',
+    'super_admin',
+    'active'
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    role = 'super_admin',
+    status = 'active';
+
+END $$;

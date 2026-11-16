@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Bell, MessageCircle, Phone, CheckCircle2, AlertCircle, CreditCard, Plus, Clock, CalendarDays, Trash2 } from 'lucide-react';
+import { Settings, Bell, MessageCircle, Phone, CheckCircle2, AlertCircle, CreditCard, Plus, Clock, CalendarDays, Trash2, LogOut, Shield, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { checkUserPermission, DEFAULT_PLANS, applySimulator } from '../lib/permissions';
 
@@ -432,6 +432,60 @@ export function ConfigPage() {
                 Fazer Upgrade
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {userProfile && (
+        <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <User size={20} color="var(--primary-color)" />
+            <h3 style={{ margin: 0 }}>Minha Conta & Acesso</h3>
+          </div>
+
+          <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.9rem', color: 'white', marginBottom: '0.3rem', fontWeight: '500' }}>
+              {userProfile.name || 'Usuário'}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+              {userProfile.email}
+            </div>
+            <span style={{ 
+              display: 'inline-block',
+              fontSize: '0.75rem', 
+              background: (userProfile.role === 'super_admin' ? '#ffc107' : userProfile.role === 'admin' ? 'var(--primary-color)' : 'rgba(255,255,255,0.1)'), 
+              color: (userProfile.role === 'super_admin' || userProfile.role === 'admin') ? '#000' : 'white', 
+              padding: '0.2rem 0.6rem', 
+              borderRadius: '12px', 
+              fontWeight: 'bold' 
+            }}>
+              Nível: {userProfile.role === 'super_admin' ? 'SUPER ADMIN' : userProfile.role === 'admin' ? 'ADMINISTRADOR' : 'ALUNO'}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {(userProfile.role === 'admin' || userProfile.role === 'super_admin') && (
+              <button
+                onClick={() => navigate('/admin')}
+                className="btn btn-primary"
+                style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.9rem' }}
+              >
+                <Shield size={18} />
+                <span>Ir para o Painel Administrativo</span>
+              </button>
+            )}
+
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                navigate('/login');
+              }}
+              className="btn"
+              style={{ width: '100%', padding: '0.8rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ff6b6b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.9rem' }}
+            >
+              <LogOut size={18} />
+              <span>Sair da Conta (Logout)</span>
+            </button>
           </div>
         </div>
       )}

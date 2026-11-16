@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Dumbbell, Users, Settings, MessageCircle, CreditCard, ShoppingCart, Bell, Lock, ShieldAlert, Home, Megaphone } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, Users, Settings, MessageCircle, CreditCard, ShoppingCart, Bell, Lock, ShieldAlert, Home, Megaphone, LogOut } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 export function AdminLayout() {
@@ -9,6 +9,7 @@ export function AdminLayout() {
   const navigate = useNavigate();
   
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasSession, setHasSession] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -22,10 +23,12 @@ export function AdminLayout() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         setIsAuthenticated(false);
+        setHasSession(false);
         setLoading(false);
         return;
       }
       
+      setHasSession(true);
       const { data: profile, error } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
       
       if (profile && (profile.role === 'admin' || profile.role === 'super_admin')) {
@@ -34,7 +37,7 @@ export function AdminLayout() {
         setError('');
       } else {
         setIsAuthenticated(false);
-        setError('Sua conta não tem privilégios de administrador.');
+        setError('Sua conta logada não possui privilégios de administrador.');
       }
     } catch (err) {
       console.error(err);
@@ -47,6 +50,7 @@ export function AdminLayout() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsAuthenticated(false);
+    setHasSession(false);
     setUserRole(null);
     navigate('/login');
   };
@@ -57,17 +61,51 @@ export function AdminLayout() {
 
   if (!isAuthenticated) {
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-dark)', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="glass-card" style={{ padding: '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '400px', textAlign: 'center' }}>
-          <Lock size={48} color="var(--primary-color)" style={{ margin: '0 auto 1rem auto' }} />
-          <h2 style={{ margin: 0 }}>Acesso Restrito</h2>
-          <p style={{ color: 'var(--text-secondary)' }}>Faça login com uma conta de administrador para acessar o painel.</p>
+      <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-dark)', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+        <div className="glass-card" style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%', maxWidth: '420px', textAlign: 'center' }}>
+          <Lock size={48} color="var(--primary-color)" style={{ margin: '0 auto 0.5rem auto' }} />
+          <h2 style={{ margin: 0, fontSize: '1.6rem' }}>Acesso Restrito</h2>
+          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.95rem' }}>
+            {hasSession 
+              ? 'Você está conectado com uma conta de aluno/usuário sem acesso administrativo.' 
+              : 'Faça login com uma conta de administrador para acessar o painel.'}
+          </p>
           
-          {error && <div style={{ background: 'rgba(255,68,68,0.1)', color: '#ff4444', padding: '1rem', borderRadius: '8px' }}>{error}</div>}
-          
-          <button onClick={() => navigate('/login')} className="btn btn-primary" style={{ padding: '1rem', marginTop: '1rem', fontSize: '1.1rem' }}>
-            Ir para a página de Login
-          </button>
+          {error && (
+            <div style={{ background: 'rgba(255,68,68,0.12)', border: '1px solid rgba(255,68,68,0.3)', color: '#ff4444', padding: '0.85rem', borderRadius: '8px', fontSize: '0.9rem' }}>
+              {error}
+            </div>
+          )}
+
+          {hasSession ? (
+            <>
+              <button 
+                onClick={handleLogout} 
+                className="btn btn-primary" 
+                style={{ padding: '0.9rem', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              >
+                <LogOut size={18} />
+                Sair e Fazer Login como Admin
+              </button>
+
+              <button 
+                onClick={() => navigate('/')} 
+                className="btn" 
+                style={{ padding: '0.85rem', background: 'rgba(255,255,255,0.06)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              >
+                <Home size={18} />
+                Voltar para a Área do Aluno
+              </button>
+            </>
+          ) : (
+            <button 
+              onClick={() => navigate('/login')} 
+              className="btn btn-primary" 
+              style={{ padding: '0.9rem', fontSize: '1rem' }}
+            >
+              Ir para a página de Login
+            </button>
+          )}
         </div>
       </div>
     );

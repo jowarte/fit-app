@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Mail, Lock, LogIn, UserPlus, User } from 'lucide-react';
+import { Mail, Lock, LogIn, UserPlus, User, LogOut, ArrowRight } from 'lucide-react';
 import { DEFAULT_PLANS } from '../lib/permissions';
 
-export function AuthPage() {
+export function AuthPage({ session: propSession }) {
   const navigate = useNavigate();
+  const [session, setSession] = useState(propSession || null);
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [name, setName] = useState('');
@@ -19,6 +20,14 @@ export function AuthPage() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const planId = searchParams.get('plan');
+
+  useEffect(() => {
+    if (!session) {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data?.session) setSession(data.session);
+      });
+    }
+  }, []);
 
   React.useEffect(() => {
     if (planId) {
@@ -60,10 +69,24 @@ export function AuthPage() {
         setIsForgotPassword(false);
       }
     } else if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      // Se já houver sessão anterior, limpa antes de autenticar a nova conta
+      await supabase.auth.signOut();
+      
+      const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setError(getFriendlyErrorMessage(error));
       } else {
+        try {
+          if (authData?.user?.id) {
+            const { data: profile } = await supabase.from('profiles').select('role').eq('id', authData.user.id).single();
+            if (profile && (profile.role === 'admin' || profile.role === 'super_admin')) {
+              navigate('/admin');
+              return;
+            }
+          }
+        } catch (roleErr) {
+          console.error('Erro ao verificar permissão do perfil:', roleErr);
+        }
         navigate('/');
       }
     } else {
@@ -155,6 +178,43 @@ export function AuthPage() {
             {isForgotPassword ? 'Enviaremos um link para redefinir sua senha' : isLogin ? 'Faça login para acessar seus treinos' : 'Cadastre-se para começar'}
           </p>
         </div>
+
+        {session?.user && (
+          <div style={{ background: 'rgba(0, 210, 255, 0.08)', border: '1px solid rgba(0, 210, 255, 0.25)', padding: '1rem', borderRadius: '10px', marginBottom: '1.5rem', textAlign: 'left' }}>
+            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              Você já está conectado como:
+            </p>
+            <p style={{ margin: '0 0 0.75rem 0', fontWeight: 'bold', color: 'var(--primary-color)', fontSize: '0.95rem', wordBreak: 'break-all' }}>
+              {session.user.email}
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="btn btn-primary"
+                style={{ flex: 1, padding: '0.5rem 0.75rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}
+              >
+                <span>Acessar App</span>
+                <ArrowRight size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  setSession(null);
+                }}
+                className="btn"
+                style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: 'rgba(255,255,255,0.08)', color: '#ff6b6b', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+              >
+                <LogOut size={14} />
+                <span>Desconectar</span>
+              </button>
+            </div>
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '0.75rem', paddingTop: '0.5rem', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Ou entre com outra conta abaixo:</span>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div style={{ background: 'rgba(255, 68, 68, 0.1)', border: '1px solid #ff4444', color: '#ff4444', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' }}>

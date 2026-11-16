@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, Copy, CheckCircle2, Send } from 'lucide-react';
+import { Save, Copy, CheckCircle2, Send, Key, Mail, Lock, ShieldCheck, User } from 'lucide-react';
 
 export function AdminSettings() {
   const [n8nUrl, setN8nUrl] = useState('');
@@ -8,6 +8,14 @@ export function AdminSettings() {
   const [n8nName, setN8nName] = useState('Integração 1 (n8n, Make, etc)');
   const [botVendeName, setBotVendeName] = useState('Integração 2 (Bot Vende, etc)');
   
+  // Estados para credenciais do Administrador
+  const [currentEmail, setCurrentEmail] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [savingAccount, setSavingAccount] = useState(false);
+  const [accountMessage, setAccountMessage] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
@@ -49,17 +57,84 @@ export function AdminSettings() {
 
   useEffect(() => {
     async function fetchSettings() {
-      const { data, error } = await supabase.from('app_settings').select('*').eq('id', 1).single();
-      if (!error && data) {
-        setN8nUrl(data.n8n_webhook_url || '');
-        setBotVendeUrl(data.bot_vende_webhook_url || '');
-        if (data.n8n_webhook_name) setN8nName(data.n8n_webhook_name);
-        if (data.bot_vende_webhook_name) setBotVendeName(data.bot_vende_webhook_name);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.email) {
+          setCurrentEmail(session.user.email);
+          setNewEmail(session.user.email);
+        }
+
+        const { data, error } = await supabase.from('app_settings').select('*').eq('id', 1).single();
+        if (!error && data) {
+          setN8nUrl(data.n8n_webhook_url || '');
+          setBotVendeUrl(data.bot_vende_webhook_url || '');
+          if (data.n8n_webhook_name) setN8nName(data.n8n_webhook_name);
+          if (data.bot_vende_webhook_name) setBotVendeName(data.bot_vende_webhook_name);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar configurações:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchSettings();
   }, []);
+
+  async function handleUpdateAccount(e) {
+    e.preventDefault();
+    setSavingAccount(true);
+    setAccountMessage(null);
+
+    try {
+      if (newPassword && newPassword.length < 6) {
+        throw new Error('A nova senha deve conter no mínimo 6 caracteres.');
+      }
+
+      if (newPassword && newPassword !== confirmPassword) {
+        throw new Error('A confirmação de senha não coincide com a nova senha.');
+      }
+
+      const updates = {};
+      let emailChanged = false;
+
+      if (newEmail && newEmail.toLowerCase() !== currentEmail.toLowerCase()) {
+        updates.email = newEmail.trim().toLowerCase();
+        emailChanged = true;
+      }
+
+      if (newPassword) {
+        updates.password = newPassword;
+      }
+
+      if (!updates.email && !updates.password) {
+        throw new Error('Nenhuma alteração foi informada.');
+      }
+
+      const { data: userResponse, error: authError } = await supabase.auth.updateUser(updates);
+      if (authError) throw authError;
+
+      // Se mudou o email, atualiza também a tabela profiles
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id && updates.email) {
+        await supabase.from('profiles').update({ email: updates.email }).eq('id', session.user.id);
+        setCurrentEmail(updates.email);
+      }
+
+      setNewPassword('');
+      setConfirmPassword('');
+      
+      let msg = 'Dados de acesso atualizados com sucesso!';
+      if (emailChanged) {
+        msg += ' Atenção: se a confirmação de e-mail estiver ativa no Supabase, confirme o link enviado para o novo e-mail.';
+      }
+      setAccountMessage({ type: 'success', text: msg });
+    } catch (err) {
+      console.error(err);
+      setAccountMessage({ type: 'error', text: err.message || 'Erro ao atualizar dados de acesso.' });
+    } finally {
+      setSavingAccount(false);
+    }
+  }
 
   async function handleSave(e) {
     e.preventDefault();
@@ -87,6 +162,92 @@ export function AdminSettings() {
     <div className="animate-fade-in">
       <h1 style={{ marginBottom: '2rem' }}>Configurações</h1>
       
+      {/* Dados de Acesso do Administrador */}
+      <div className="glass-card" style={{ maxWidth: '600px', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+          <Key size={22} color="var(--primary-color)" />
+          <h3 style={{ margin: 0, color: 'var(--primary-color)' }}>Meus Dados de Acesso (Administrador)</h3>
+        </div>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+          Altere aqui seu e-mail e sua senha de acesso ao painel. Se você acabou de instalar o sistema com o login e senha padrão, troque-os agora para proteger o seu painel.
+        </p>
+
+        {accountMessage && (
+          <div style={{ 
+            padding: '1rem', 
+            borderRadius: '8px', 
+            marginBottom: '1.5rem',
+            background: accountMessage.type === 'error' ? 'rgba(255, 68, 68, 0.1)' : 'rgba(0, 200, 83, 0.1)',
+            color: accountMessage.type === 'error' ? '#ff4444' : '#00c853',
+            border: `1px solid ${accountMessage.type === 'error' ? '#ff4444' : '#00c853'}`
+          }}>
+            {accountMessage.text}
+          </div>
+        )}
+
+        <form onSubmit={handleUpdateAccount} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+              E-mail de Login do Administrador:
+            </label>
+            <div style={{ position: 'relative' }}>
+              <Mail size={18} color="var(--text-secondary)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <input 
+                type="email" 
+                required
+                value={newEmail}
+                onChange={e => setNewEmail(e.target.value)}
+                style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 2.8rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+              Nova Senha (deixe em branco se não desejar alterar):
+            </label>
+            <div style={{ position: 'relative' }}>
+              <Lock size={18} color="var(--text-secondary)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <input 
+                type="password" 
+                placeholder="Mínimo 6 caracteres"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 2.8rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+              />
+            </div>
+          </div>
+
+          {newPassword && (
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                Confirmar Nova Senha:
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={18} color="var(--text-secondary)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                <input 
+                  type="password" 
+                  placeholder="Repita a nova senha"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 2.8rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                />
+              </div>
+            </div>
+          )}
+
+          <button 
+            type="submit" 
+            className="btn btn-primary" 
+            disabled={savingAccount} 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', marginTop: '0.5rem' }}
+          >
+            <ShieldCheck size={18} />
+            {savingAccount ? 'Salvando credenciais...' : 'Salvar Novo E-mail / Senha'}
+          </button>
+        </form>
+      </div>
+
       <div className="glass-card" style={{ maxWidth: '600px' }}>
         <h3 style={{ marginBottom: '1rem', color: 'var(--primary-color)' }}>Integrações (Webhooks)</h3>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { Dumbbell, Home, Trophy, Settings, Play, Plus, Activity, Check, Copy, X, MessageCircle, Zap, Clock, User, Folder, ArrowLeft, Trash2, Megaphone } from 'lucide-react';
+import { Dumbbell, Home, Trophy, Settings, Play, Plus, Activity, Check, Copy, X, MessageCircle, Zap, Clock, User, Folder, ArrowLeft, Trash2, Megaphone, LogOut, Shield } from 'lucide-react';
 import { VideoPlayer } from './components/VideoPlayer';
 import { RestTimer } from './components/RestTimer';
 import { WorkoutBuilder } from './pages/WorkoutBuilder';
@@ -167,6 +167,53 @@ function HomePage() {
         <img src="/cover.png" alt="Fitness Cover" className="hero-bg" />
         <div className="hero-overlay"></div>
         <div className="container animate-fade-in" style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {userProfile && (userProfile.role === 'admin' || userProfile.role === 'super_admin') ? (
+              <Link
+                to="/admin"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  background: 'linear-gradient(135deg, #00d2ff, #0077ff)',
+                  color: '#000',
+                  padding: '0.4rem 0.9rem',
+                  borderRadius: '20px',
+                  fontWeight: 'bold',
+                  fontSize: '0.8rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 2px 10px rgba(0, 210, 255, 0.4)'
+                }}
+              >
+                <Shield size={14} />
+                <span>Painel Admin ({userProfile.role === 'super_admin' ? 'Super' : 'Admin'})</span>
+              </Link>
+            ) : <div />}
+
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.location.href = '/login';
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                background: 'rgba(0, 0, 0, 0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: 'rgba(255, 255, 255, 0.85)',
+                padding: '0.35rem 0.75rem',
+                borderRadius: '16px',
+                fontSize: '0.75rem',
+                cursor: 'pointer'
+              }}
+              title="Sair da conta"
+            >
+              <LogOut size={13} />
+              <span>Sair</span>
+            </button>
+          </div>
+
           <h1 style={{ marginBottom: '8px' }}>
             Transforme seu <br />
             <span className="gradient-text">Potencial</span>
@@ -757,7 +804,7 @@ function App() {
             <Route path="/config" element={<ProtectedRoute session={session}><ConfigPage /></ProtectedRoute>} />
 
             {/* Rotas Públicas */}
-            <Route path="/login" element={session ? <Navigate to="/" replace /> : <AuthPage />} />
+            <Route path="/login" element={<AuthPage session={session} />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/planos" element={<SalesPage />} />
             
