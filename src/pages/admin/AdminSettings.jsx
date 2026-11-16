@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, SUPABASE_URL } from '../../lib/supabase';
 import { Save, Copy, CheckCircle2, Send, Key, Mail, Lock, ShieldCheck, User } from 'lucide-react';
 
 export function AdminSettings() {
@@ -21,7 +21,7 @@ export function AdminSettings() {
   const [message, setMessage] = useState(null);
   const [copied, setCopied] = useState(false);
   
-  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cakto-webhook`;
+  const webhookUrl = `${SUPABASE_URL}/functions/v1/cakto-webhook`;
 
   const handleCopyWebhook = () => {
     navigator.clipboard.writeText(webhookUrl);
