@@ -37,14 +37,23 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 -- ==============================================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  profile_count INT;
+  assigned_role TEXT := 'user';
 BEGIN
+  -- Se for o primeiro usuário do banco OU se o e-mail começar com admin@
+  SELECT count(*) INTO profile_count FROM public.profiles;
+  IF profile_count = 0 OR NEW.email ILIKE 'admin@%' THEN
+    assigned_role := 'super_admin';
+  END IF;
+
   INSERT INTO public.profiles (id, email, name, phone, role)
   VALUES (
     NEW.id,
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'name', ''),
+    COALESCE(NEW.raw_user_meta_data->>'name', 'Administrador'),
     COALESCE(NEW.raw_user_meta_data->>'phone', ''),
-    'user'
+    assigned_role
   )
   ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,

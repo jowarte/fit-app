@@ -110,6 +110,16 @@ export function AuthPage({ session: propSession }) {
             name: name
           };
 
+          // Auto-promoção para novas instalações: primeiro usuário ou e-mail com "admin@" vira Super Admin
+          try {
+            const { data: existingSuperAdmins } = await supabase.from('profiles').select('id').eq('role', 'super_admin');
+            if (!existingSuperAdmins || existingSuperAdmins.length === 0 || email.toLowerCase().startsWith('admin@')) {
+              updateData.role = 'super_admin';
+            }
+          } catch (e) {
+            console.error('Verificação de primeiro admin:', e);
+          }
+
           if (planId) {
             let plans = DEFAULT_PLANS;
             try {
