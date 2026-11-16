@@ -3,6 +3,16 @@
 -- Execute este script no SQL Editor do Supabase após o supabase_schema.sql
 -- ==============================================================================
 
+-- Garante que a tabela exercises tenha todas as colunas necessárias
+ALTER TABLE public.exercises 
+  ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS media_url TEXT,
+  ADD COLUMN IF NOT EXISTS media_type TEXT DEFAULT 'local_video',
+  ADD COLUMN IF NOT EXISTS muscle_group TEXT DEFAULT 'Geral',
+  ADD COLUMN IF NOT EXISTS target_gender TEXT DEFAULT 'Ambos',
+  ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS release_date TIMESTAMPTZ;
+
 INSERT INTO public.exercises (id, name, description, media_url, media_type, muscle_group, target_gender, is_premium, release_date) VALUES
   ('398ebc34-5c6b-49ef-9ae2-e53d1fcf12dc', 'Abraços nos Joelhos em Pé', '', '/midia/MAIS DE 3.000 GIFS+ VÍDEOS/18MOBILIDADE-ALONGAMENTO/mulher/Abraços nos Joelhos em Pé.gif', 'gif', 'Treino em Casa', 'Mulher', FALSE, NULL),
   ('e78cb3e4-a2bf-4a54-bb3d-11c6889177be', 'Adução de pernas (alongamento do adutor maior)', '', '/midia/MAIS DE 3.000 GIFS+ VÍDEOS/18MOBILIDADE-ALONGAMENTO/mulher/adução de pernas (alongamento do adutor maior).gif', 'gif', 'Treino em Casa', 'Mulher', FALSE, NULL),
