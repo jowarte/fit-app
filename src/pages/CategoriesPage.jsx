@@ -4,6 +4,7 @@ import { ArrowLeft, Search, Folder, LayoutGrid, Filter, Lock } from 'lucide-reac
 import { VideoPlayer } from '../components/VideoPlayer';
 import { useNavigate } from 'react-router-dom';
 import { checkUserPermission, applySimulator } from '../lib/permissions';
+import { getMediaUrl } from '../lib/media';
 
 export function CategoriesPage() {
   const navigate = useNavigate();
@@ -370,7 +371,7 @@ export function CategoriesPage() {
                     }}>
                       {ex.media_type === 'gif' || ex.media_type === 'local_video' ? (
                         <img 
-                          src={ex.media_url} 
+                          src={getMediaUrl(ex.media_url)} 
                           alt={ex.name}
                           style={{ 
                             position: 'absolute', top: 0, left: 0, 

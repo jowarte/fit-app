@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Folder, ArrowLeft, Film, Image as ImageIcon, Video, Trash2, Edit2, Plus, Search, Filter, Eye, EyeOff, Lock, Clock, Settings as SettingsIcon, X } from 'lucide-react';
+import { getMediaUrl } from '../../lib/media';
 
 export function AdminExercises() {
   const [exercises, setExercises] = useState([]);
@@ -472,10 +473,10 @@ export function AdminExercises() {
                 }}>
                   <div style={{ height: '160px', width: '100%', background: '#0a0a0a', position: 'relative' }}>
                     {ex.media_type === 'gif' ? (
-                      <img src={ex.media_url} alt={ex.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                      <img src={getMediaUrl(ex.media_url)} alt={ex.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
                     ) : isVideo ? (
                       <video 
-                        src={ex.media_url} 
+                        src={getMediaUrl(ex.media_url)} 
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                         muted loop playsInline 
                         onMouseOver={e => e.target.play()} 

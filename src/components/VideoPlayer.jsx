@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Repeat } from 'lucide-react';
+import { getMediaUrl } from '../lib/media';
 
 export function VideoPlayer({ url, type, title }) {
   const [isLooping, setIsLooping] = useState(true);
+  const resolvedUrl = getMediaUrl(url);
   // type pode ser 'youtube', 'local_video', ou 'gif'
   
   if (!url) return <div className="glass-card" style={{ padding: '2rem', textAlign: 'center' }}>Mídia não encontrada</div>;
@@ -47,7 +49,7 @@ export function VideoPlayer({ url, type, title }) {
           playsInline // muito importante para iOS (iPhone)
           style={{ borderRadius: '12px', backgroundColor: '#000', maxHeight: '400px' }}
         >
-          <source src={url} type="video/mp4" />
+          <source src={resolvedUrl} type="video/mp4" />
           Seu navegador não suporta vídeos.
         </video>
       );
@@ -56,7 +58,7 @@ export function VideoPlayer({ url, type, title }) {
     if (type === 'gif') {
       return (
         <img 
-          src={url} 
+          src={resolvedUrl} 
           alt={title || "GIF de Treino"} 
           style={{ width: '100%', borderRadius: '12px', objectFit: 'contain', maxHeight: '400px' }}
         />

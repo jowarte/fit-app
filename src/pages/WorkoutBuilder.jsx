@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { VideoPlayer } from '../components/VideoPlayer';
 import { checkUserPermission, applySimulator } from '../lib/permissions';
+import { getMediaUrl } from '../lib/media';
 
 export function WorkoutBuilder() {
   const navigate = useNavigate();
@@ -507,7 +508,7 @@ export function WorkoutBuilder() {
                                         transition: 'filter 0.3s'
                                       }}>
                                         {ex.media_type === 'gif' || ex.media_type === 'local_video' ? (
-                                          <img src={ex.media_url} alt={ex.name} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                                          <img src={getMediaUrl(ex.media_url)} alt={ex.name} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                                         ) : (
                                           <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'linear-gradient(135deg, #1a1a2e, #16213e)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <span style={{ fontSize: '2.5rem' }}>🎬</span>
