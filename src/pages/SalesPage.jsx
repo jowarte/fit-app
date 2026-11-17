@@ -3,8 +3,57 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { CheckCircle2, Star, Dumbbell, Smartphone, Activity, ArrowRight, X, Clock, Play, Users, Sparkles, Shield, Zap } from 'lucide-react';
 
+const DEFAULT_PLANS = [
+  {
+    id: 'plan_free',
+    name: 'Free (Iniciante)',
+    price: '0,00',
+    cycle: 'Mensal',
+    isRecommended: false,
+    isVisible: true,
+    accessHome: true,
+    accessGym: false,
+    accessCreate: false,
+    accessWhatsapp: false,
+    accessAdvanced: false,
+    checkoutUrl: '',
+    features: ['Acesso ao Treino em Casa', 'Diário de Treino Básico']
+  },
+  {
+    id: 'plan_pro',
+    name: 'PRO (Recomendado)',
+    price: '29,90',
+    cycle: 'Mensal',
+    isRecommended: true,
+    isVisible: true,
+    accessHome: true,
+    accessGym: true,
+    accessCreate: true,
+    accessWhatsapp: true,
+    accessAdvanced: true,
+    checkoutUrl: '',
+    features: ['Acesso Total (Casa e Academia)', 'Criação ilimitada de treinos', 'Compartilhar no WhatsApp', 'Gráficos de Evolução', 'Acesso ao Treino Avançado']
+  }
+];
+
+const mapPlan = (p) => ({
+  id: p.id,
+  name: p.name,
+  price: p.price,
+  cycle: p.cycle || 'Mensal',
+  checkoutUrl: p.checkoutUrl || p.checkout_url || '',
+  isVisible: p.isVisible !== undefined ? p.isVisible : (p.is_visible !== undefined ? p.is_visible : true),
+  isRecommended: p.isRecommended !== undefined ? p.isRecommended : (p.is_recommended !== undefined ? p.is_recommended : false),
+  accessHome: p.accessHome !== undefined ? p.accessHome : (p.access_home !== undefined ? p.access_home : false),
+  accessGym: p.accessGym !== undefined ? p.accessGym : (p.access_gym !== undefined ? p.access_gym : false),
+  accessCreate: p.accessCreate !== undefined ? p.accessCreate : (p.access_create !== undefined ? p.access_create : false),
+  accessWhatsapp: p.accessWhatsapp !== undefined ? p.accessWhatsapp : (p.access_whatsapp !== undefined ? p.access_whatsapp : false),
+  accessAdvanced: p.accessAdvanced !== undefined ? p.accessAdvanced : (p.access_advanced !== undefined ? p.access_advanced : false),
+  features: Array.isArray(p.features) ? p.features : []
+});
+
 export function SalesPage() {
-  const [plans, setPlans] = useState([]);
+  const [plans, setPlans] = useState(DEFAULT_PLANS);
   const navigate = useNavigate();
 
   // Configurações e Textos Dinâmicos (IA / Customizáveis)
@@ -78,12 +127,25 @@ export function SalesPage() {
           if (settings.seo_title) document.title = settings.seo_title;
         }
 
-        const { data: plansData } = await supabase.from('plans').select('*').order('created_at', { ascending: true });
+        const { data: plansData, error: plansError } = await supabase.from('plans').select('*').order('created_at', { ascending: true });
         if (plansData && plansData.length > 0) {
-          setPlans(plansData);
+          setPlans(plansData.map(mapPlan));
         } else {
           const savedPlans = localStorage.getItem('admin_plans');
-          if (savedPlans) setPlans(JSON.parse(savedPlans));
+          if (savedPlans) {
+            try {
+              const parsed = JSON.parse(savedPlans);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setPlans(parsed.map(mapPlan));
+              } else {
+                setPlans(DEFAULT_PLANS);
+              }
+            } catch (e) {
+              setPlans(DEFAULT_PLANS);
+            }
+          } else {
+            setPlans(DEFAULT_PLANS);
+          }
         }
       } catch (err) {
         console.error("Erro ao carregar dados da página de vendas:", err);
