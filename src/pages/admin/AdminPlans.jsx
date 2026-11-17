@@ -62,7 +62,7 @@ export function AdminPlans() {
           {
             id: '2', name: 'PRO (Recomendado)', price: '29,90', cycle: 'Mensal', isRecommended: true, isVisible: true,
             accessHome: true, accessGym: true, accessCreate: true, accessWhatsapp: true, accessAdvanced: true, webhook_product_id: '',
-            features: ['Acesso Total (Casa e Academia)', 'Criação ilimitada de treinos', 'Lembretes automáticos via WhatsApp', 'Gráficos de Evolução', 'Acesso ao Treino Avançado']
+            features: ['Acesso Total (Casa e Academia)', 'Criação ilimitada de treinos', 'Compartilhar no WhatsApp', 'Gráficos de Evolução', 'Acesso ao Treino Avançado']
           }
         ];
         setPlans(defaultPlans);
@@ -87,7 +87,7 @@ export function AdminPlans() {
       'Acesso ao Treino em Casa',
       'Acesso ao Treino na Academia',
       'Criar Treinos Personalizados',
-      'Lembretes via WhatsApp',
+      'Compartilhar no WhatsApp',
       'Acesso ao Treino Avançado'
     ];
     // Garantir que todos os campos existam para evitar undefined
@@ -131,7 +131,7 @@ export function AdminPlans() {
       'Acesso ao Treino em Casa',
       'Acesso ao Treino na Academia',
       'Criar Treinos Personalizados',
-      'Lembretes via WhatsApp',
+      'Compartilhar no WhatsApp',
       'Acesso ao Treino Avançado'
     ];
     finalData.features = (finalData.features || []).filter(f => !CORE_FEATS.includes(f));
@@ -400,7 +400,7 @@ export function AdminPlans() {
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', cursor: 'pointer' }}>
                   <input type="checkbox" checked={formData.accessWhatsapp} onChange={e => setFormData({...formData, accessWhatsapp: e.target.checked})} style={{ width: '20px', height: '20px', accentColor: '#25D366' }}/>
-                  Lembretes automáticos no WhatsApp
+                  Compartilhar Treinos no WhatsApp
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '8px', cursor: 'pointer' }}>
                   <input type="checkbox" checked={formData.accessAdvanced} onChange={e => setFormData({...formData, accessAdvanced: e.target.checked})} style={{ width: '20px', height: '20px', accentColor: 'var(--primary-color)' }}/>
@@ -505,7 +505,7 @@ export function AdminPlans() {
                   {plan.accessWhatsapp && (
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.9rem' }}>
                       <CheckCircle2 size={18} color="var(--primary-color)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span style={{ color: 'rgba(255,255,255,0.9)' }}>Lembretes via WhatsApp</span>
+                      <span style={{ color: 'rgba(255,255,255,0.9)' }}>Compartilhar no WhatsApp</span>
                     </div>
                   )}
                   {plan.accessAdvanced && (

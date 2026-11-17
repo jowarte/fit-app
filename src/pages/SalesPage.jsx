@@ -18,7 +18,7 @@ export function SalesPage() {
   const [salesBenefits, setSalesBenefits] = useState([
     { title: 'Vídeos de Alta Definição', desc: 'Mais de 1.800 exercícios com execuções perfeitas gravadas em detalhes para nunca mais errar o movimento.' },
     { title: 'Treine Onde Quiser', desc: 'Fichas completas tanto para academia quanto para casa usando apenas o peso do seu corpo.' },
-    { title: 'Avisos no WhatsApp', desc: 'Compartilhe seus treinos e assista aos vídeos diretamente no WhatsApp com um único clique.' },
+    { title: 'Compartilhe no WhatsApp', desc: 'Envie suas rotinas e vídeos de treino para você mesmo ou amigos no WhatsApp com apenas 1 clique.' },
     { title: 'Acompanhamento Semanal', desc: 'Registre cada treino concluído e acompanhe sua evolução semana a semana.' }
   ]);
 

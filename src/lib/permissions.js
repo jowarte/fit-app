@@ -7,7 +7,7 @@ export const DEFAULT_PLANS = [
   {
     id: '2', name: 'PRO (Recomendado)', price: '29,90', cycle: 'Mensal', isRecommended: true,
     accessHome: true, accessGym: true, accessCreate: true, accessWhatsapp: true,
-    features: ['Acesso Total (Casa e Academia)', 'Criação ilimitada de treinos', 'Lembretes automáticos via WhatsApp', 'Gráficos de Evolução']
+    features: ['Acesso Total (Casa e Academia)', 'Criação ilimitada de treinos', 'Compartilhar no WhatsApp', 'Gráficos de Evolução']
   }
 ];
 

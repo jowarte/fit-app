@@ -572,7 +572,7 @@ export function AdminClients() {
                     { label: 'Treinos em Casa', key: 'access_home_override' },
                     { label: 'Treinos na Academia', key: 'access_gym_override' },
                     { label: 'Criar Treinos Personalizados', key: 'access_create_override' },
-                    { label: 'Lembretes WhatsApp', key: 'access_whatsapp_override' }
+                    { label: 'Compartilhar no WhatsApp', key: 'access_whatsapp_override' }
                   ].map(item => (
                     <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
                       <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>{item.label}</span>

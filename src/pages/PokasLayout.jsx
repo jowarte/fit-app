@@ -333,7 +333,7 @@ function PokasPerfilPage() {
       <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '1.2rem', marginTop: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
           <div>
-            <h4 style={{ margin: '0 0 0.2rem 0', color: 'white' }}>🔔 Lembretes de treino</h4>
+            <h4 style={{ margin: '0 0 0.2rem 0', color: 'white' }}>📅 Dias de Treino Planejados</h4>
             <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Dias que você pretende treinar</p>
           </div>
           <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 'bold' }}>{reminders.length} dias/semana</span>

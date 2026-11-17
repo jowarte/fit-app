@@ -58,7 +58,7 @@ O aplicativo conta com:
 - Mais de 1.800 exercícios em vídeos e GIFs em alta definição
 - Divisão de treinos para Casa e Academia
 - Montador de fichas personalizadas
-- Compartilhamento no WhatsApp com vídeos
+- Compartilhamento no WhatsApp com vídeos (importante: o app NÃO envia lembretes automáticos, o recurso é de compartilhar fichas e vídeos diretamente no WhatsApp com 1 clique)
 - Acompanhamento semanal de evolução
 
 Você DEVE retornar OBRIGATORIAMENTE um JSON puro com esta estrutura exata (sem markdown ou texto extra):
