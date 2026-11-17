@@ -16,10 +16,31 @@ export function AuthPage({ session: propSession }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
+  const [appName, setAppName] = useState('TreinoApp');
+  const [appLogoUrl, setAppLogoUrl] = useState('');
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const planId = searchParams.get('plan');
+
+  useEffect(() => {
+    try {
+      const local = localStorage.getItem('app_settings_local');
+      if (local) {
+        const p = JSON.parse(local);
+        if (p.app_name) setAppName(p.app_name);
+        if (p.app_logo_url) setAppLogoUrl(p.app_logo_url);
+        if (p.primary_color) document.documentElement.style.setProperty('--primary-color', p.primary_color);
+      }
+    } catch(e) {}
+    supabase.from('app_settings').select('app_name, app_logo_url, primary_color').eq('id', 1).single().then(({ data }) => {
+      if (data) {
+        if (data.app_name) setAppName(data.app_name);
+        if (data.app_logo_url) setAppLogoUrl(data.app_logo_url);
+        if (data.primary_color) document.documentElement.style.setProperty('--primary-color', data.primary_color);
+      }
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!session) {
@@ -178,7 +199,16 @@ export function AuthPage({ session: propSession }) {
   }
 
   return (
-    <div className="container animate-fade-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+    <div className="container animate-fade-in" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', padding: '2rem 1rem' }}>
+      
+      {/* Logotipo / Nome do App */}
+      <div style={{ textAlign: 'center', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        {appLogoUrl ? (
+          <img src={appLogoUrl} alt={appName} style={{ maxHeight: '48px', maxWidth: '160px', objectFit: 'contain', marginBottom: '0.4rem' }} onError={(e) => { e.target.style.display = 'none'; }} />
+        ) : null}
+        <h1 style={{ fontSize: '1.6rem', margin: 0, color: 'white', fontWeight: 'bold' }}>{appName}</h1>
+      </div>
+
       <div className="glass-card" style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <h2 style={{ margin: '0 0 0.5rem 0', color: 'var(--primary-color)' }}>

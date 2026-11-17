@@ -84,6 +84,11 @@ function HomePage() {
   const [weeklyCompleted, setWeeklyCompleted] = React.useState(0);
   const [weeklyTotal, setWeeklyTotal] = React.useState(0);
   
+  // Customização da Marca & Capa
+  const [appName, setAppName] = React.useState('TreinoApp');
+  const [appLogoUrl, setAppLogoUrl] = React.useState('');
+  const [appCoverUrl, setAppCoverUrl] = React.useState('/cover.png');
+  
   // States para o histórico detalhado
   const [weeklyLogs, setWeeklyLogs] = React.useState([]);
   const [historyModalOpen, setHistoryModalOpen] = React.useState(false);
@@ -113,6 +118,34 @@ function HomePage() {
       try {
         setLoadingRoutine(true);
         
+        // 1. Carregar configurações da marca (Logo, Capa, Nome)
+        try {
+          const localSettings = localStorage.getItem('app_settings_local');
+          if (localSettings) {
+            const s = JSON.parse(localSettings);
+            if (s.app_name) setAppName(s.app_name);
+            if (s.app_logo_url) setAppLogoUrl(s.app_logo_url);
+            if (s.app_cover_url) setAppCoverUrl(s.app_cover_url);
+            if (s.primary_color) {
+              document.documentElement.style.setProperty('--primary-color', s.primary_color);
+            }
+            if (s.seo_title) document.title = s.seo_title;
+          }
+          
+          const { data: dbSettings } = await supabase.from('app_settings').select('*').eq('id', 1).single();
+          if (dbSettings) {
+            if (dbSettings.app_name) setAppName(dbSettings.app_name);
+            if (dbSettings.app_logo_url) setAppLogoUrl(dbSettings.app_logo_url);
+            if (dbSettings.app_cover_url) setAppCoverUrl(dbSettings.app_cover_url);
+            if (dbSettings.primary_color) {
+              document.documentElement.style.setProperty('--primary-color', dbSettings.primary_color);
+            }
+            if (dbSettings.seo_title) document.title = dbSettings.seo_title;
+          }
+        } catch(e) {
+          console.error("Erro ao carregar marca:", e);
+        }
+
         // Verifica onboarding do usuário
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user?.id) {
@@ -165,54 +198,73 @@ function HomePage() {
         />
       )}
       <section className="hero-section">
-        <img src="/cover.png" alt="Fitness Cover" className="hero-bg" />
+        <img 
+          src={appCoverUrl || '/cover.png'} 
+          alt={appName} 
+          className="hero-bg" 
+          onError={(e) => { e.target.src = '/cover.png'; }}
+        />
         <div className="hero-overlay"></div>
         <div className="container animate-fade-in" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            {userProfile && (userProfile.role === 'admin' || userProfile.role === 'super_admin') ? (
-              <Link
-                to="/admin"
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              {appLogoUrl ? (
+                <img 
+                  src={appLogoUrl} 
+                  alt={appName} 
+                  style={{ maxHeight: '36px', maxWidth: '130px', objectFit: 'contain' }} 
+                  onError={(e) => { e.target.style.display = 'none'; }} 
+                />
+              ) : null}
+              <span style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'white', letterSpacing: '0.5px' }}>{appName}</span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {userProfile && (userProfile.role === 'admin' || userProfile.role === 'super_admin') ? (
+                <Link
+                  to="/admin"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    background: 'linear-gradient(135deg, #00d2ff, #0077ff)',
+                    color: '#000',
+                    padding: '0.4rem 0.9rem',
+                    borderRadius: '20px',
+                    fontWeight: 'bold',
+                    fontSize: '0.8rem',
+                    textDecoration: 'none',
+                    boxShadow: '0 2px 10px rgba(0, 210, 255, 0.4)'
+                  }}
+                >
+                  <Shield size={14} />
+                  <span>Painel Admin ({userProfile.role === 'super_admin' ? 'Super' : 'Admin'})</span>
+                </Link>
+              ) : null}
+
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.href = '/login';
+                }}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.4rem',
-                  background: 'linear-gradient(135deg, #00d2ff, #0077ff)',
-                  color: '#000',
-                  padding: '0.4rem 0.9rem',
-                  borderRadius: '20px',
-                  fontWeight: 'bold',
-                  fontSize: '0.8rem',
-                  textDecoration: 'none',
-                  boxShadow: '0 2px 10px rgba(0, 210, 255, 0.4)'
+                  gap: '0.35rem',
+                  background: 'rgba(0, 0, 0, 0.4)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: 'rgba(255, 255, 255, 0.85)',
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '16px',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer'
                 }}
+                title="Sair da conta"
               >
-                <Shield size={14} />
-                <span>Painel Admin ({userProfile.role === 'super_admin' ? 'Super' : 'Admin'})</span>
-              </Link>
-            ) : <div />}
-
-            <button
-              onClick={async () => {
-                await supabase.auth.signOut();
-                window.location.href = '/login';
-              }}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                background: 'rgba(0, 0, 0, 0.4)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                color: 'rgba(255, 255, 255, 0.85)',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '16px',
-                fontSize: '0.75rem',
-                cursor: 'pointer'
-              }}
-              title="Sair da conta"
-            >
-              <LogOut size={13} />
-              <span>Sair</span>
-            </button>
+                <LogOut size={13} />
+                <span>Sair</span>
+              </button>
+            </div>
           </div>
 
           <h1 style={{ marginBottom: '8px' }}>

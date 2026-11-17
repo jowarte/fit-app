@@ -1,11 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { CheckCircle2, Star, Dumbbell, Smartphone, Activity, ArrowRight, X, Clock, Play, Users } from 'lucide-react';
+import { CheckCircle2, Star, Dumbbell, Smartphone, Activity, ArrowRight, X, Clock, Play, Users, Sparkles, Shield, Zap } from 'lucide-react';
 
 export function SalesPage() {
   const [plans, setPlans] = useState([]);
   const navigate = useNavigate();
+
+  // Configurações e Textos Dinâmicos (IA / Customizáveis)
+  const [appName, setAppName] = useState('TreinoApp');
+  const [appLogoUrl, setAppLogoUrl] = useState('');
+  const [appCoverUrl, setAppCoverUrl] = useState('/hero-bg.png');
+  const [salesBadge, setSalesBadge] = useState('O APP MAIS COMPLETO DO BRASIL');
+  const [salesHeadline, setSalesHeadline] = useState('Transforme seu corpo com o método definitivo de treino.');
+  const [salesSubheadline, setSalesSubheadline] = useState('Pare de pular treinos. Tenha acesso a vídeos realistas de alta qualidade, crie rotinas personalizadas e mantenha o foco inabalável.');
+  const [salesCtaText, setSalesCtaText] = useState('Ver Planos');
+  const [salesBenefits, setSalesBenefits] = useState([
+    { title: 'Vídeos de Alta Definição', desc: 'Mais de 1.800 exercícios com execuções perfeitas gravadas em detalhes para nunca mais errar o movimento.' },
+    { title: 'Treine Onde Quiser', desc: 'Fichas completas tanto para academia quanto para casa usando apenas o peso do seu corpo.' },
+    { title: 'Avisos no WhatsApp', desc: 'Compartilhe seus treinos e assista aos vídeos diretamente no WhatsApp com um único clique.' },
+    { title: 'Acompanhamento Semanal', desc: 'Registre cada treino concluído e acompanhe sua evolução semana a semana.' }
+  ]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -15,64 +30,126 @@ export function SalesPage() {
       window.fbq('track', 'PageView');
     }
 
-    const saved = localStorage.getItem('admin_plans');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setPlans(parsed);
+    // 1. Ler cache local imediatamente
+    try {
+      const localContent = localStorage.getItem('sales_page_content');
+      if (localContent) {
+        const parsed = JSON.parse(localContent);
+        if (parsed.sales_badge) setSalesBadge(parsed.sales_badge);
+        if (parsed.sales_headline) setSalesHeadline(parsed.sales_headline);
+        if (parsed.sales_subheadline) setSalesSubheadline(parsed.sales_subheadline);
+        if (parsed.sales_cta_text) setSalesCtaText(parsed.sales_cta_text);
+        if (parsed.sales_benefits && Array.isArray(parsed.sales_benefits)) setSalesBenefits(parsed.sales_benefits);
+      }
+
+      const localSettings = localStorage.getItem('app_settings_local');
+      if (localSettings) {
+        const s = JSON.parse(localSettings);
+        if (s.app_name) setAppName(s.app_name);
+        if (s.app_logo_url) setAppLogoUrl(s.app_logo_url);
+        if (s.app_cover_url) setAppCoverUrl(s.app_cover_url);
+        if (s.primary_color) {
+          document.documentElement.style.setProperty('--primary-color', s.primary_color);
         }
-      } catch (e) {
-        console.error('Erro ao ler admin_plans:', e);
+        if (s.seo_title) document.title = s.seo_title;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    // 2. Ler do Supabase
+    async function loadData() {
+      try {
+        const { data: settings } = await supabase.from('app_settings').select('*').eq('id', 1).single();
+        if (settings) {
+          if (settings.app_name) setAppName(settings.app_name);
+          if (settings.app_logo_url) setAppLogoUrl(settings.app_logo_url);
+          if (settings.app_cover_url) setAppCoverUrl(settings.app_cover_url);
+          if (settings.sales_badge) setSalesBadge(settings.sales_badge);
+          if (settings.sales_headline) setSalesHeadline(settings.sales_headline);
+          if (settings.sales_subheadline) setSalesSubheadline(settings.sales_subheadline);
+          if (settings.sales_cta_text) setSalesCtaText(settings.sales_cta_text);
+          if (settings.sales_benefits && Array.isArray(settings.sales_benefits) && settings.sales_benefits.length > 0) {
+            setSalesBenefits(settings.sales_benefits);
+          }
+          if (settings.primary_color) {
+            document.documentElement.style.setProperty('--primary-color', settings.primary_color);
+          }
+          if (settings.seo_title) document.title = settings.seo_title;
+        }
+
+        const { data: plansData } = await supabase.from('plans').select('*').order('created_at', { ascending: true });
+        if (plansData && plansData.length > 0) {
+          setPlans(plansData);
+        } else {
+          const savedPlans = localStorage.getItem('admin_plans');
+          if (savedPlans) setPlans(JSON.parse(savedPlans));
+        }
+      } catch (err) {
+        console.error("Erro ao carregar dados da página de vendas:", err);
       }
     }
+    loadData();
   }, []);
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', paddingBottom: '5rem', overflowX: 'hidden' }}>
-      {/* Navbar Minimalista (Apenas para a página de vendas) */}
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 5%', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', position: 'fixed', top: 0, width: '100%', zIndex: 50, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Dumbbell color="var(--primary-color)" size={28} />
-          <h2 style={{ margin: 0, fontSize: '1.5rem', color: 'white' }}>TreinoApp</h2>
+      
+      {/* Navbar Minimalista */}
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 5%', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', position: 'fixed', top: 0, width: '100%', zIndex: 50, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          {appLogoUrl ? (
+            <img src={appLogoUrl} alt={appName} style={{ maxHeight: '35px', maxWidth: '120px', objectFit: 'contain' }} />
+          ) : (
+            <Dumbbell color="var(--primary-color)" size={28} />
+          )}
+          <h2 style={{ margin: 0, fontSize: '1.4rem', color: 'white', fontWeight: 'bold' }}>{appName}</h2>
         </div>
         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
           <a href="#beneficios" style={{ color: 'white', textDecoration: 'none', fontSize: '0.9rem' }} className="hide-on-mobile">Como Funciona</a>
           <a href="#planos" style={{ color: 'white', textDecoration: 'none', fontSize: '0.9rem' }} className="hide-on-mobile">Planos</a>
-          <button onClick={() => navigate('/login')} className="btn" style={{ background: 'transparent', color: 'var(--primary-color)', border: '1px solid var(--primary-color)', fontWeight: 'bold', padding: '0.5rem 1.5rem', borderRadius: '20px' }}>Entrar</button>
+          <button onClick={() => navigate('/login')} className="btn" style={{ background: 'transparent', color: 'var(--primary-color)', border: '1px solid var(--primary-color)', fontWeight: 'bold', padding: '0.4rem 1.4rem', borderRadius: '20px' }}>Entrar</button>
         </div>
       </nav>
 
-      {/* BLOCO 1: Hero Section com Imagem de Fundo Gerada pela IA */}
+      {/* BLOCO 1: Hero Section com Imagem de Fundo e Textos Gerados pela IA */}
       <section style={{ 
         position: 'relative', 
         minHeight: '100vh', 
         display: 'flex', 
         alignItems: 'center', 
-        justifyContent: 'center',
-        padding: '6rem 5% 4rem 5%',
+        justifyContent: 'center', 
+        padding: '7rem 5% 4rem 5%',
         textAlign: 'center',
-        background: `url('/hero-bg.png') center/cover no-repeat` 
+        background: `url('${appCoverUrl || '/hero-bg.png'}') center/cover no-repeat` 
       }}>
         {/* Overlay Escuro para dar leitura ao texto */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, var(--bg-dark) 100%)', zIndex: 1 }}></div>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 50%, var(--bg-dark) 100%)', zIndex: 1 }}></div>
         
         <div className="animate-fade-in" style={{ position: 'relative', zIndex: 2, maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div style={{ background: 'rgba(0, 255, 136, 0.2)', color: '#00ff88', padding: '0.4rem 1rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', border: '1px solid rgba(0,255,136,0.3)' }}>
-            <Star size={14} fill="#00ff88" /> O APP MAIS COMPLETO DO BRASIL
+          
+          {/* Badge / Selo */}
+          <div style={{ background: 'rgba(0, 255, 136, 0.15)', color: 'var(--primary-color)', padding: '0.45rem 1.2rem', borderRadius: '25px', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', border: '1px solid rgba(0,255,136,0.3)', letterSpacing: '0.5px' }}>
+            <Star size={14} fill="var(--primary-color)" /> {salesBadge}
           </div>
-          <h1 style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', fontWeight: '900', lineHeight: 1.1, marginBottom: '1.5rem', textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
-            Transforme seu corpo com o <span style={{ color: 'var(--primary-color)' }}>método definitivo</span> de treino.
+
+          {/* Headline Principal */}
+          <h1 style={{ fontSize: 'clamp(2.3rem, 5vw, 4rem)', fontWeight: '900', lineHeight: 1.15, marginBottom: '1.5rem', textShadow: '0 4px 20px rgba(0,0,0,0.7)', color: 'white' }}>
+            {salesHeadline}
           </h1>
-          <p style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.9)', marginBottom: '2.5rem', maxWidth: '700px', margin: '0 auto 2.5rem auto', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
-            Pare de pular treinos. Tenha acesso a vídeos realistas de alta qualidade, crie rotinas personalizadas e receba avisos no WhatsApp para manter o foco inabalável.
+
+          {/* Subtítulo */}
+          <p style={{ fontSize: '1.15rem', color: 'rgba(255,255,255,0.9)', marginBottom: '2.5rem', maxWidth: '750px', margin: '0 auto 2.5rem auto', textShadow: '0 2px 10px rgba(0,0,0,0.7)', lineHeight: 1.6 }}>
+            {salesSubheadline}
           </p>
+
+          {/* Botões de Ação */}
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <a href="#planos" className="btn btn-primary animate-scale" style={{ padding: '1rem 2.5rem', fontSize: '1.2rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold', boxShadow: '0 10px 30px rgba(0,255,136,0.3)' }}>
-              Ver Planos <ArrowRight size={20} />
+            <a href="#planos" className="btn btn-primary animate-scale" style={{ padding: '1rem 2.5rem', fontSize: '1.15rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold', boxShadow: '0 10px 30px rgba(0,255,136,0.3)' }}>
+              {salesCtaText} <ArrowRight size={20} />
             </a>
-            <a href="#beneficios" className="btn" style={{ padding: '1rem 2.5rem', fontSize: '1.2rem', background: 'rgba(255,255,255,0.1)', color: 'white', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-              Como funciona
+            <a href="#beneficios" className="btn" style={{ padding: '1rem 2.5rem', fontSize: '1.15rem', background: 'rgba(255,255,255,0.1)', color: 'white', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+              Como Funciona
             </a>
           </div>
         </div>
@@ -82,177 +159,55 @@ export function SalesPage() {
       <section id="beneficios" style={{ padding: '6rem 5%', background: 'var(--bg-dark)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-            <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Por que o TreinoApp funciona?</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '600px', margin: '0 auto' }}>Esqueça aquelas planilhas de treino de papel e os aplicativos genéricos com animações 3D sem graça.</p>
+            <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Por que o {appName} funciona?</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '600px', margin: '0 auto' }}>
+              Esqueça planilhas confusas e treinos engessados. Tenha um método visual, direto ao ponto e focado na sua rotina.
+            </p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
             {/* O Problema */}
             <div className="glass-card" style={{ padding: '2.5rem', border: '1px solid rgba(255, 68, 68, 0.2)', background: 'linear-gradient(145deg, rgba(255,68,68,0.05) 0%, rgba(0,0,0,0) 100%)' }}>
               <h3 style={{ color: '#ff4444', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <X size={24} /> O jeito antigo (Falho)
+                <X size={24} /> O jeito antigo (Sem Resultados)
               </h3>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <li style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-secondary)' }}><X size={20} color="#ff4444" style={{ flexShrink: 0 }}/> Esquecer os dias de treino pela falta de incentivo.</li>
                 <li style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-secondary)' }}><X size={20} color="#ff4444" style={{ flexShrink: 0 }}/> Não saber executar o exercício porque a foto no papel não ajuda.</li>
-                <li style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-secondary)' }}><X size={20} color="#ff4444" style={{ flexShrink: 0 }}/> Gastar muito dinheiro com planilhas engessadas.</li>
+                <li style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-secondary)' }}><X size={20} color="#ff4444" style={{ flexShrink: 0 }}/> Gastar muito dinheiro com mensalidades abusivas.</li>
               </ul>
             </div>
             
             {/* A Solução */}
             <div className="glass-card" style={{ padding: '2.5rem', border: '1px solid rgba(0, 255, 136, 0.3)', background: 'linear-gradient(145deg, rgba(0,255,136,0.05) 0%, rgba(0,0,0,0) 100%)', transform: 'scale(1.05)', zIndex: 2, boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
-              <h3 style={{ color: '#00ff88', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <CheckCircle2 size={24} /> O jeito TreinoApp (Resultados)
+              <h3 style={{ color: 'var(--primary-color)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <CheckCircle2 size={24} /> O jeito {appName} (Resultados)
               </h3>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                <li style={{ display: 'flex', gap: '0.5rem', color: 'white', fontSize: '1.05rem' }}><CheckCircle2 size={22} color="#00ff88" style={{ flexShrink: 0 }}/> Avisos direto no WhatsApp para você não procrastinar.</li>
-                <li style={{ display: 'flex', gap: '0.5rem', color: 'white', fontSize: '1.05rem' }}><CheckCircle2 size={22} color="#00ff88" style={{ flexShrink: 0 }}/> +3.000 Vídeos e GIFs realistas ensinando o movimento perfeito.</li>
-                <li style={{ display: 'flex', gap: '0.5rem', color: 'white', fontSize: '1.05rem' }}><CheckCircle2 size={22} color="#00ff88" style={{ flexShrink: 0 }}/> Crie suas próprias rotinas para fazer em Casa ou na Academia.</li>
+                <li style={{ display: 'flex', gap: '0.5rem', color: 'white', fontSize: '1.05rem' }}><CheckCircle2 size={22} color="var(--primary-color)" style={{ flexShrink: 0 }}/> Compartilhe fichas e vídeos direto no WhatsApp.</li>
+                <li style={{ display: 'flex', gap: '0.5rem', color: 'white', fontSize: '1.05rem' }}><CheckCircle2 size={22} color="var(--primary-color)" style={{ flexShrink: 0 }}/> +1.800 Vídeos e GIFs realistas ensinando o movimento perfeito.</li>
+                <li style={{ display: 'flex', gap: '0.5rem', color: 'white', fontSize: '1.05rem' }}><CheckCircle2 size={22} color="var(--primary-color)" style={{ flexShrink: 0 }}/> Crie suas próprias rotinas para fazer em Casa ou na Academia.</li>
               </ul>
             </div>
           </div>
         </div>
       </section>
 
-      {/* BLOCO 3: Funcionalidades de Destaque */}
+      {/* BLOCO 3: 4 Destaques Dinâmicos Gerados por IA */}
       <section style={{ padding: '6rem 5%', background: 'rgba(255,255,255,0.02)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '3rem' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ background: 'rgba(0,255,136,0.1)', width: '80px', height: '80px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto', transform: 'rotate(-5deg)' }}>
-              <Play size={40} color="var(--primary-color)" />
-            </div>
-            <h3 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>Aprenda Vendo</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', lineHeight: 1.6 }}>Nosso banco de dados conta com vídeos reais e detalhados. Veja o movimento sendo feito por modelos de verdade, não por bonecos 3D.</p>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ background: 'rgba(0,255,136,0.1)', width: '80px', height: '80px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto', transform: 'rotate(5deg)' }}>
-              <Smartphone size={40} color="var(--primary-color)" />
-            </div>
-            <h3 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>Lembrete WhatsApp</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', lineHeight: 1.6 }}>Configure os dias que deseja treinar e nosso sistema avisa você automaticamente pelo seu WhatsApp. Impossível esquecer!</p>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ background: 'rgba(0,255,136,0.1)', width: '80px', height: '80px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto', transform: 'rotate(-5deg)' }}>
-              <Users size={40} color="var(--primary-color)" />
-            </div>
-            <h3 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>Para Todos</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', lineHeight: 1.6 }}>Separamos o acervo por categorias: Homens, Mulheres, Treino em Casa, Treino de Academia, com Peso, sem Peso, Gifs e Vídeos.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* BLOCO 3.5: Visualização Muscular */}
-      <section style={{ padding: '6rem 5%', background: 'linear-gradient(180deg, rgba(255,255,255,0.02) 0%, var(--bg-dark) 100%)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ display: 'inline-block', background: 'rgba(0, 255, 136, 0.1)', color: '#00ff88', padding: '0.5rem 1.5rem', borderRadius: '30px', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '1.5rem', border: '1px solid rgba(0,255,136,0.2)' }}>
-            MÁXIMA PRECISÃO ANATÔMICA
-          </div>
-          <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem', lineHeight: 1.2 }}>
-            Sinta o músculo certo, <span style={{ color: 'var(--primary-color)' }}>no momento exato.</span>
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '800px', margin: '0 auto 4rem auto', lineHeight: 1.6 }}>
-            Chega de treinar "no escuro" e adivinhar se o movimento está correto. O <strong>TreinoApp</strong> traz vídeos que destacam os grupos musculares exatos que você está ativando. Você vai treinar com a consciência de um atleta de alta performance, maximizando seus resultados e evitando lesões.
-          </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
-            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
-                <img src="/muscles/1.gif" alt="Anatomia Muscular 1" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '2.5rem' }}>
+          {salesBenefits.map((benefit, idx) => (
+            <div key={idx} style={{ textAlign: 'center' }}>
+              <div style={{ background: 'rgba(0,255,136,0.1)', width: '75px', height: '75px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto' }}>
+                {idx === 0 ? <Play size={36} color="var(--primary-color)" /> :
+                 idx === 1 ? <Smartphone size={36} color="var(--primary-color)" /> :
+                 idx === 2 ? <Zap size={36} color="var(--primary-color)" /> :
+                 <Shield size={36} color="var(--primary-color)" />}
               </div>
+              <h3 style={{ marginBottom: '0.8rem', fontSize: '1.3rem', color: 'white' }}>{benefit.title}</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: 1.6 }}>{benefit.desc}</p>
             </div>
-            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
-                <img src="/muscles/2.gif" alt="Anatomia Muscular 2" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-            </div>
-            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
-                <img src="/muscles/3.gif" alt="Anatomia Muscular 3" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-            </div>
-            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
-                <img src="/muscles/4.gif" alt="Anatomia Muscular 4" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* BLOCO 3.6: Treino em Casa */}
-      <section style={{ padding: '6rem 5%', background: 'linear-gradient(180deg, var(--bg-dark) 0%, rgba(255,255,255,0.02) 100%)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ display: 'inline-block', background: 'rgba(255, 165, 0, 0.1)', color: '#ffa500', padding: '0.5rem 1.5rem', borderRadius: '30px', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '1.5rem', border: '1px solid rgba(255,165,0,0.2)' }}>
-            TREINO EM QUALQUER LUGAR
-          </div>
-          <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem', lineHeight: 1.2 }}>
-            Sua academia é <span style={{ color: '#ffa500' }}>onde você estiver.</span>
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '800px', margin: '0 auto 4rem auto', lineHeight: 1.6 }}>
-            Falta de tempo, dia de chuva ou academia lotada? Não tem problema. O <strong>TreinoApp</strong> possui um acervo gigantesco focado em treinos com o peso do próprio corpo. Em poucos minutos na sua sala, você queima gordura, ganha condicionamento e define os músculos sem precisar de nenhum equipamento. Resultados de academia, no seu ritmo e no seu espaço.
-          </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
-            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
-                <video src="/home-workout/5.mp4" autoPlay loop muted playsInline style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-            </div>
-            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
-                <img src="/home-workout/6.gif" alt="Treino em Casa" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-            </div>
-            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
-                <img src="/home-workout/7.gif" alt="Treino em Casa" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-            </div>
-            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
-                <video src="/home-workout/8.mp4" autoPlay loop muted playsInline style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* BLOCO 3.7: Treino Avançado (Pokas) */}
-      <section style={{ padding: '6rem 5%', background: 'linear-gradient(180deg, rgba(255,255,255,0.02) 0%, var(--bg-dark) 100%)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4rem' }}>
-          
-          <div style={{ flex: '1 1 500px' }}>
-            <div style={{ display: 'inline-block', background: 'rgba(168, 85, 247, 0.1)', color: '#a855f7', padding: '0.5rem 1.5rem', borderRadius: '30px', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '1.5rem', border: '1px solid rgba(168,85,247,0.3)' }}>
-              MÓDULO EXCLUSIVO
-            </div>
-            <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem', lineHeight: 1.2 }}>
-              <span style={{ color: '#a855f7' }}>Pokas Mode:</span> O Fim do Platô Muscular.
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-              A maior dor de quem treina há algum tempo é a <strong>estagnação</strong>. O corpo é inteligente, se acostuma com os mesmos estímulos e simplesmente para de evoluir, gerando frustração.
-            </p>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '2.5rem', lineHeight: 1.6 }}>
-              É aí que entra o nosso sistema de <strong>Treino Avançado (Pokas Mode)</strong>. Ele foi desenvolvido para "quebrar" essa adaptação, utilizando algoritmos avançados para prescrever estímulos de altíssima intensidade no momento exato em que seu corpo precisa. Volte a ver seu corpo mudar no espelho, mês após mês.
-            </p>
-            <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'white' }}>
-                <CheckCircle2 size={20} color="#a855f7" /> Técnicas avançadas e progressão inteligente.
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'white' }}>
-                <CheckCircle2 size={20} color="#a855f7" /> Superação do "efeito platô" (estagnação) em semanas.
-              </li>
-            </ul>
-          </div>
-
-          <div style={{ flex: '1 1 400px', display: 'flex', gap: '1.5rem', justifyContent: 'center' }}>
-            <div className="glass-card animate-scale" style={{ padding: '0.5rem', background: 'rgba(168,85,247,0.05)', borderRadius: '24px', border: '1px solid rgba(168,85,247,0.2)', width: '45%' }}>
-              <img src="/advanced/01.png" alt="Pokas Mode Interface 1" style={{ width: '100%', borderRadius: '16px', objectFit: 'cover' }} />
-            </div>
-            <div className="glass-card animate-scale" style={{ padding: '0.5rem', background: 'rgba(168,85,247,0.05)', borderRadius: '24px', border: '1px solid rgba(168,85,247,0.2)', width: '45%', transform: 'translateY(2rem)', transitionDelay: '0.2s' }}>
-              <img src="/advanced/02.png" alt="Pokas Mode Interface 2" style={{ width: '100%', borderRadius: '16px', objectFit: 'cover' }} />
-            </div>
-          </div>
-
+          ))}
         </div>
       </section>
 
@@ -260,7 +215,9 @@ export function SalesPage() {
       <section id="planos" style={{ padding: '6rem 5%' }}>
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <h2 style={{ fontSize: '3rem', marginBottom: '1rem' }}>Pronto para começar?</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto' }}>Escolha o plano que melhor se adapta à sua rotina e inicie sua transformação hoje. Sem taxas de cancelamento.</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto' }}>
+            Escolha o plano que melhor se adapta à sua rotina e inicie sua transformação hoje.
+          </p>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 10 }}>
@@ -292,7 +249,6 @@ export function SalesPage() {
                 </div>
 
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.2rem', marginBottom: '3rem' }}>
-                  {/* Benefícios Core Ativos */}
                   {plan.accessHome && (
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
                       <CheckCircle2 size={22} color="var(--primary-color)" style={{ flexShrink: 0, marginTop: '2px' }} />
@@ -314,7 +270,7 @@ export function SalesPage() {
                   {plan.accessWhatsapp && (
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
                       <CheckCircle2 size={22} color="var(--primary-color)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.9)' }}>Lembretes via WhatsApp</span>
+                      <span style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.9)' }}>Compartilhamento via WhatsApp</span>
                     </div>
                   )}
                   {plan.accessAdvanced && (
@@ -324,7 +280,6 @@ export function SalesPage() {
                     </div>
                   )}
 
-                  {/* Benefícios Customizados (filtrando duplicatas dos itens padrão) */}
                   {Array.isArray(plan.features) && plan.features
                     .filter(feat => !['Acesso ao Treino em Casa', 'Acesso ao Treino na Academia', 'Criar Treinos Personalizados', 'Lembretes via WhatsApp', 'Acesso ao Treino Avançado', 'Diário de Treino Básico', 'Acesso Total (Casa e Academia)', 'Criação ilimitada de treinos', 'Lembretes automáticos via WhatsApp'].includes(feat))
                     .map((feat, idx) => (
@@ -333,8 +288,6 @@ export function SalesPage() {
                       <span style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.9)' }}>{feat}</span>
                     </div>
                   ))}
-                  
-                  {/* Fim dos Benefícios */}
                 </div>
 
                 <button 
@@ -358,12 +311,6 @@ export function SalesPage() {
                     transition: 'all 0.2s',
                     cursor: 'pointer'
                   }}
-                  onMouseOver={(e) => {
-                    if(!plan.isRecommended) e.currentTarget.style.background = 'rgba(255,255,255,0.15)'
-                  }}
-                  onMouseOut={(e) => {
-                    if(!plan.isRecommended) e.currentTarget.style.background = 'rgba(255,255,255,0.1)'
-                  }}
                 >
                   {plan.price === '0' || plan.price === '0,00' ? 'Começar Grátis' : 'Assinar Agora'}
                 </button>
@@ -375,9 +322,13 @@ export function SalesPage() {
       
       {/* Footer */}
       <footer style={{ textAlign: 'center', padding: '3rem', borderTop: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)', background: 'rgba(0,0,0,0.5)' }}>
-        <Dumbbell color="var(--text-secondary)" size={32} style={{ marginBottom: '1rem', opacity: 0.5 }} />
-        <p style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>TreinoApp - Evolua Todos os Dias</p>
-        <p style={{ fontSize: '0.8rem' }}>© 2026 Todos os direitos reservados.</p>
+        {appLogoUrl ? (
+          <img src={appLogoUrl} alt={appName} style={{ maxHeight: '40px', maxWidth: '140px', objectFit: 'contain', marginBottom: '1rem', opacity: 0.8 }} />
+        ) : (
+          <Dumbbell color="var(--text-secondary)" size={32} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+        )}
+        <p style={{ fontSize: '1rem', marginBottom: '0.5rem', color: 'white' }}>{appName} - Evolua Todos os Dias</p>
+        <p style={{ fontSize: '0.8rem' }}>© {new Date().getFullYear()} Todos os direitos reservados.</p>
       </footer>
     </div>
   );
