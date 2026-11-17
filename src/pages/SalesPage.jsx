@@ -211,6 +211,121 @@ export function SalesPage() {
         </div>
       </section>
 
+      {/* BLOCO 3.5: Visualização Muscular com GIFs */}
+      <section style={{ padding: '6rem 5%', background: 'linear-gradient(180deg, rgba(255,255,255,0.02) 0%, var(--bg-dark) 100%)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ display: 'inline-block', background: 'rgba(0, 255, 136, 0.1)', color: '#00ff88', padding: '0.5rem 1.5rem', borderRadius: '30px', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '1.5rem', border: '1px solid rgba(0,255,136,0.2)' }}>
+            MÁXIMA PRECISÃO ANATÔMICA
+          </div>
+          <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem', lineHeight: 1.2 }}>
+            Sinta o músculo certo, <span style={{ color: 'var(--primary-color)' }}>no momento exato.</span>
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '800px', margin: '0 auto 4rem auto', lineHeight: 1.6 }}>
+            Chega de treinar "no escuro" e adivinhar se o movimento está correto. O <strong>{appName}</strong> traz vídeos que destacam os grupos musculares exatos que você está ativando. Você vai treinar com a consciência de um atleta de alta performance, maximizando seus resultados e evitando lesões.
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
+            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
+                <img src="/muscles/1.gif" alt="Anatomia Muscular 1" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </div>
+            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
+                <img src="/muscles/2.gif" alt="Anatomia Muscular 2" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </div>
+            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
+                <img src="/muscles/3.gif" alt="Anatomia Muscular 3" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </div>
+            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
+                <img src="/muscles/4.gif" alt="Anatomia Muscular 4" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* BLOCO 3.6: Treino em Casa com Vídeos e GIFs */}
+      <section style={{ padding: '6rem 5%', background: 'linear-gradient(180deg, var(--bg-dark) 0%, rgba(255,255,255,0.02) 100%)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ display: 'inline-block', background: 'rgba(255, 165, 0, 0.1)', color: '#ffa500', padding: '0.5rem 1.5rem', borderRadius: '30px', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '1.5rem', border: '1px solid rgba(255,165,0,0.2)' }}>
+            TREINO EM QUALQUER LUGAR
+          </div>
+          <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem', lineHeight: 1.2 }}>
+            Sua academia é <span style={{ color: '#ffa500' }}>onde você estiver.</span>
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '800px', margin: '0 auto 4rem auto', lineHeight: 1.6 }}>
+            Falta de tempo, dia de chuva ou academia lotada? Não tem problema. O <strong>{appName}</strong> possui um acervo gigantesco focado em treinos com o peso do próprio corpo. Em poucos minutos na sua sala, você queima gordura, ganha condicionamento e define os músculos sem precisar de nenhum equipamento. Resultados de academia, no seu ritmo e no seu espaço.
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
+            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
+                <video src="/home-workout/5.mp4" autoPlay loop muted playsInline style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </div>
+            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
+                <img src="/home-workout/6.gif" alt="Treino em Casa" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </div>
+            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
+                <img src="/home-workout/7.gif" alt="Treino em Casa" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </div>
+            <div className="glass-card animate-scale" style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
+                <video src="/home-workout/8.mp4" autoPlay loop muted playsInline style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* BLOCO 3.7: Treino Avançado (Pokas) */}
+      <section style={{ padding: '6rem 5%', background: 'linear-gradient(180deg, rgba(255,255,255,0.02) 0%, var(--bg-dark) 100%)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4rem' }}>
+          
+          <div style={{ flex: '1 1 500px' }}>
+            <div style={{ display: 'inline-block', background: 'rgba(168, 85, 247, 0.1)', color: '#a855f7', padding: '0.5rem 1.5rem', borderRadius: '30px', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '1.5rem', border: '1px solid rgba(168,85,247,0.3)' }}>
+              MÓDULO EXCLUSIVO
+            </div>
+            <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem', lineHeight: 1.2 }}>
+              <span style={{ color: '#a855f7' }}>Pokas Mode:</span> O Fim do Platô Muscular.
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+              A maior dor de quem treina há algum tempo é a <strong>estagnação</strong>. O corpo é inteligente, se acostuma com os mesmos estímulos e simplesmente para de evoluir, gerando frustração.
+            </p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '2.5rem', lineHeight: 1.6 }}>
+              É aí que entra o nosso sistema de <strong>Treino Avançado (Pokas Mode)</strong>. Ele foi desenvolvido para "quebrar" essa adaptação, utilizando algoritmos avançados para prescrever estímulos de altíssima intensidade no momento exato em que seu corpo precisa. Volte a ver seu corpo mudar no espelho, mês após mês.
+            </p>
+            <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'white' }}>
+                <CheckCircle2 size={20} color="#a855f7" /> Técnicas avançadas e progressão inteligente.
+              </li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'white' }}>
+                <CheckCircle2 size={20} color="#a855f7" /> Superação do "efeito platô" (estagnação) em semanas.
+              </li>
+            </ul>
+          </div>
+
+          <div style={{ flex: '1 1 400px', display: 'flex', gap: '1.5rem', justifyContent: 'center' }}>
+            <div className="glass-card animate-scale" style={{ padding: '0.5rem', background: 'rgba(168,85,247,0.05)', borderRadius: '24px', border: '1px solid rgba(168,85,247,0.2)', width: '45%' }}>
+              <img src="/advanced/01.png" alt="Pokas Mode Interface 1" style={{ width: '100%', borderRadius: '16px', objectFit: 'cover' }} />
+            </div>
+            <div className="glass-card animate-scale" style={{ padding: '0.5rem', background: 'rgba(168,85,247,0.05)', borderRadius: '24px', border: '1px solid rgba(168,85,247,0.2)', width: '45%', transform: 'translateY(2rem)', transitionDelay: '0.2s' }}>
+              <img src="/advanced/02.png" alt="Pokas Mode Interface 2" style={{ width: '100%', borderRadius: '16px', objectFit: 'cover' }} />
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       {/* BLOCO 4: Pricing / Planos (Dynamic) */}
       <section id="planos" style={{ padding: '6rem 5%' }}>
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
