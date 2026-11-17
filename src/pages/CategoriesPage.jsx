@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Search, Folder, LayoutGrid, Filter, Lock } from 'lucide-react';
+import { ArrowLeft, Search, Folder, LayoutGrid, Filter, Lock, MessageCircle } from 'lucide-react';
 import { VideoPlayer } from '../components/VideoPlayer';
 import { useNavigate } from 'react-router-dom';
 import { checkUserPermission, applySimulator } from '../lib/permissions';
 import { getMediaUrl } from '../lib/media';
+import { shareExerciseWhatsApp } from '../lib/whatsapp';
 
 export function CategoriesPage() {
   const navigate = useNavigate();
@@ -401,6 +402,37 @@ export function CategoriesPage() {
                     </div>
                   )}
                   
+                  {/* Botão de compartilhar WhatsApp no modo Grid */}
+                  {!isLocked && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        shareExerciseWhatsApp(ex);
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        background: 'rgba(0, 0, 0, 0.7)',
+                        border: '1px solid rgba(37, 211, 102, 0.5)',
+                        borderRadius: '50%',
+                        width: '32px',
+                        height: '32px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#25D366',
+                        cursor: 'pointer',
+                        zIndex: 6,
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.5)'
+                      }}
+                      title="Compartilhar exercício no WhatsApp"
+                    >
+                      <MessageCircle size={16} />
+                    </button>
+                  )}
+
                   {/* Nome sobreposto na parte de baixo */}
                   <div style={{
                     position: 'absolute', bottom: 0, left: 0, right: 0,
@@ -449,7 +481,8 @@ export function CategoriesPage() {
                     <VideoPlayer 
                       type={ex.media_type} 
                       url={ex.media_url} 
-                      title="" 
+                      title=""
+                      exerciseData={ex}
                     />
                   </div>
                   

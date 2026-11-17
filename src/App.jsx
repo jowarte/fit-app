@@ -33,6 +33,7 @@ import { StudentDashboard } from './pages/StudentDashboard';
 import { ActiveWorkoutPage } from './pages/ActiveWorkoutPage';
 import { PokasLayout } from './pages/PokasLayout';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { shareRoutineWhatsApp } from './lib/whatsapp';
 import './App.css'; // Limpar o App.css se existir, usando apenas index.css
 
 function ProtectedRoute({ session, children }) {
@@ -65,8 +66,8 @@ function Navbar({ session }) {
         <span>Conquistas</span>
       </Link>
       <Link to="/config" className={`nav-item ${path === '/config' ? 'active' : ''}`}>
-        <MessageCircle size={24} color="#25D366" />
-        <span style={{ color: path === '/config' ? '#25D366' : 'inherit' }}>Lembretes</span>
+        <Settings size={24} />
+        <span>Configurações</span>
       </Link>
       <Link to="/pokas" className={`nav-item ${path === '/pokas' ? 'active' : ''}`}>
         <Zap size={24} color="#a855f7" />
@@ -124,7 +125,7 @@ function HomePage() {
           }
         }
 
-        const { data, error } = await supabase.from('routines').select('*, routine_exercises(*)');
+        const { data, error } = await supabase.from('routines').select('*, routine_exercises(*, exercises(*))');
         if (error) throw error;
         
         if (data) {
@@ -239,9 +240,37 @@ function HomePage() {
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Nenhum treino para {todayName.toLowerCase()}</p>
               )}
             </div>
-            <Link to="/treinos" className="btn btn-primary" style={{ padding: '0.75rem', display: 'flex', alignItems: 'center' }}>
-              <Play size={20} fill="black" />
-            </Link>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              {todayRoutine && (
+                <button
+                  type="button"
+                  onClick={() => shareRoutineWhatsApp(todayRoutine)}
+                  style={{
+                    background: 'rgba(37, 211, 102, 0.15)',
+                    border: '1px solid rgba(37, 211, 102, 0.4)',
+                    borderRadius: '8px',
+                    padding: '0.65rem 0.9rem',
+                    color: '#25D366',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    fontWeight: 'bold',
+                    transition: 'all 0.2s'
+                  }}
+                  title="Enviar treino no WhatsApp"
+                  onMouseOver={(e) => e.currentTarget.style.background = 'rgba(37, 211, 102, 0.25)'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'rgba(37, 211, 102, 0.15)'}
+                >
+                  <MessageCircle size={18} />
+                  <span>WhatsApp</span>
+                </button>
+              )}
+              <Link to="/treinos" className="btn btn-primary" style={{ padding: '0.75rem', display: 'flex', alignItems: 'center' }}>
+                <Play size={20} fill="black" />
+              </Link>
+            </div>
           </div>
           
           <div 
@@ -511,7 +540,16 @@ function TreinosPage() {
                   <h3 style={{ color: 'var(--primary-color)', margin: '0 0 0.25rem 0' }}>{displayName}</h3>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>{routine.day_of_week}</p>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button 
+                    type="button"
+                    onClick={() => shareRoutineWhatsApp(routine)} 
+                    className="btn" 
+                    style={{ background: 'rgba(37, 211, 102, 0.15)', color: '#25D366', padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid rgba(37, 211, 102, 0.4)', cursor: 'pointer', fontWeight: '600' }}
+                    title="Enviar treino no WhatsApp com links dos vídeos"
+                  >
+                    <MessageCircle size={16} /> WhatsApp
+                  </button>
                   <button 
                     onClick={() => { setRoutineToRepeat({...routine, displayName}); setRepeatModalOpen(true); }} 
                     className="btn" 

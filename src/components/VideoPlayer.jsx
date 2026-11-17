@@ -1,18 +1,25 @@
 import React, { useState } from 'react';
-import { Repeat } from 'lucide-react';
+import { Repeat, MessageCircle } from 'lucide-react';
 import { getMediaUrl } from '../lib/media';
 
-export function VideoPlayer({ url, type, title }) {
+export function VideoPlayer({ url, type, title, showWhatsApp = true, exerciseData = null }) {
   const [isLooping, setIsLooping] = useState(true);
   const resolvedUrl = getMediaUrl(url);
   // type pode ser 'youtube', 'local_video', ou 'gif'
   
   if (!url) return <div className="glass-card" style={{ padding: '2rem', textAlign: 'center' }}>Mídia não encontrada</div>;
 
+  const handleShareWhatsApp = (e) => {
+    e.stopPropagation();
+    const cleanTitle = title || exerciseData?.name || 'Exercício';
+    const muscle = exerciseData?.muscle_group ? `\n🎯 *Foco:* ${exerciseData.muscle_group}` : '';
+    const text = `🏋️‍♂️ *${cleanTitle}*${muscle}\n\n▶️ *Veja a execução em vídeo/GIF:*\n${resolvedUrl}\n\n💪 *Bons treinos! Foco no resultado!*`;
+    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(waUrl, '_blank');
+  };
+
   const renderMedia = () => {
     if (type === 'youtube') {
-      // Extrair o ID do vídeo do YouTube para colocar no iframe
-      // Suporta urls do tipo watch?v=ID ou youtu.be/ID
       let videoId = '';
       try {
         if (url.includes('youtu.be/')) {
@@ -71,29 +78,60 @@ export function VideoPlayer({ url, type, title }) {
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
       {renderMedia()}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
-        {title && <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{title}</h3>}
-        {type !== 'gif' && (
-          <button 
-            onClick={() => setIsLooping(!isLooping)}
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '8px',
-              padding: '0.5rem 0.75rem',
-              color: isLooping ? 'var(--primary-color)' : 'var(--text-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-              transition: 'all 0.2s'
-            }}
-          >
-            <Repeat size={16} />
-            {isLooping ? 'Repetição: ON' : 'Repetição: OFF'}
-          </button>
-        )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        {title && <h3 style={{ fontSize: '1.05rem', margin: 0, color: 'white' }}>{title}</h3>}
+        
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginLeft: 'auto', flexWrap: 'wrap' }}>
+          {showWhatsApp && resolvedUrl && (
+            <button 
+              type="button"
+              onClick={handleShareWhatsApp}
+              style={{
+                background: 'rgba(37, 211, 102, 0.15)',
+                border: '1px solid rgba(37, 211, 102, 0.4)',
+                borderRadius: '8px',
+                padding: '0.45rem 0.75rem',
+                color: '#25D366',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                fontWeight: 'bold',
+                transition: 'all 0.2s'
+              }}
+              title="Compartilhar exercício no WhatsApp"
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(37, 211, 102, 0.25)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(37, 211, 102, 0.15)'}
+            >
+              <MessageCircle size={15} />
+              <span>WhatsApp</span>
+            </button>
+          )}
+
+          {type !== 'gif' && (
+            <button 
+              type="button"
+              onClick={() => setIsLooping(!isLooping)}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '8px',
+                padding: '0.45rem 0.75rem',
+                color: isLooping ? 'var(--primary-color)' : 'var(--text-secondary)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                transition: 'all 0.2s'
+              }}
+            >
+              <Repeat size={15} />
+              {isLooping ? 'Repetição: ON' : 'Repetição: OFF'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

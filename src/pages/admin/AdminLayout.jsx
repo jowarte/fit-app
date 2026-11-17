@@ -301,22 +301,6 @@ export function AdminLayout() {
           <Bell size={20} />
           <span>Sininho Push</span>
         </Link>
-
-        <Link 
-          to="/admin/whatsapp"
-          style={{
-            display: 'flex', alignItems: 'center', gap: '0.75rem',
-            padding: '0.75rem 1rem',
-            borderRadius: '8px',
-            textDecoration: 'none',
-            color: path === '/admin/whatsapp' ? 'var(--bg-color)' : 'var(--text-color)',
-            background: path === '/admin/whatsapp' ? '#25D366' : 'transparent', // WhatsApp Green
-            transition: 'all 0.2s'
-          }}
-        >
-          <MessageCircle size={20} />
-          <span style={{ color: path === '/admin/whatsapp' ? 'white' : 'var(--text-color)' }}>Lembretes WhatsApp</span>
-        </Link>
         
         <button 
           onClick={handleLogout}
