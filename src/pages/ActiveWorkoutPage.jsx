@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Trophy, Play, Timer, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
+import { initTimerAudio, playTimerAlarm } from '../lib/audioTimer';
 
 // Simple confetti burst component
 function ConfettiBurst({ show, onDone }) {
@@ -51,10 +52,16 @@ function RestTimerBanner({ seconds, onSkip }) {
   const [remaining, setRemaining] = useState(seconds);
 
   useEffect(() => {
+    initTimerAudio();
     setRemaining(seconds);
     const interval = setInterval(() => {
       setRemaining(prev => {
-        if (prev <= 1) { clearInterval(interval); onSkip(); return 0; }
+        if (prev <= 1) {
+          clearInterval(interval);
+          playTimerAlarm();
+          onSkip();
+          return 0;
+        }
         return prev - 1;
       });
     }, 1000);
