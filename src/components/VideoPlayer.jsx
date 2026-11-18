@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Repeat, MessageCircle } from 'lucide-react';
+import { Repeat, MessageCircle, Dumbbell } from 'lucide-react';
 import { getMediaUrl } from '../lib/media';
 
 export function VideoPlayer({ url, type, title, showWhatsApp = true, exerciseData = null }) {
@@ -7,7 +7,15 @@ export function VideoPlayer({ url, type, title, showWhatsApp = true, exerciseDat
   const resolvedUrl = getMediaUrl(url);
   // type pode ser 'youtube', 'local_video', ou 'gif'
   
-  if (!url) return <div className="glass-card" style={{ padding: '2rem', textAlign: 'center' }}>Mídia não encontrada</div>;
+  if (!url) {
+    return (
+      <div className="glass-card" style={{ padding: '2rem 1.5rem', textAlign: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.12)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6rem' }}>
+        <Dumbbell size={32} color="var(--primary-color)" style={{ opacity: 0.7 }} />
+        <p style={{ margin: 0, fontWeight: 'bold', color: 'white', fontSize: '1rem' }}>{title || 'Exercício Personalizado'}</p>
+        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Exercício criado manualmente sem vídeo demonstrativo cadastrado.</span>
+      </div>
+    );
+  }
 
   const handleShareWhatsApp = (e) => {
     e.stopPropagation();
