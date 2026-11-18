@@ -198,11 +198,30 @@ CREATE TABLE IF NOT EXISTS public.routine_exercises (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   routine_id UUID REFERENCES public.routines(id) ON DELETE CASCADE,
   exercise_id UUID REFERENCES public.exercises(id) ON DELETE CASCADE,
+  name TEXT,
+  order_index INTEGER DEFAULT 1,
   sort_order INTEGER DEFAULT 1,
   sets INTEGER DEFAULT 3,
   reps TEXT DEFAULT '10',
+  rest_time INTEGER DEFAULT 60,
+  weight NUMERIC DEFAULT 0,
+  weight_unit TEXT DEFAULT 'kg',
+  notes TEXT,
+  target_muscle TEXT,
+  is_custom BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Garantir que todas as colunas existam caso a tabela já tenha sido criada antes
+ALTER TABLE public.routine_exercises ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE public.routine_exercises ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 1;
+ALTER TABLE public.routine_exercises ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 1;
+ALTER TABLE public.routine_exercises ADD COLUMN IF NOT EXISTS rest_time INTEGER DEFAULT 60;
+ALTER TABLE public.routine_exercises ADD COLUMN IF NOT EXISTS weight NUMERIC DEFAULT 0;
+ALTER TABLE public.routine_exercises ADD COLUMN IF NOT EXISTS weight_unit TEXT DEFAULT 'kg';
+ALTER TABLE public.routine_exercises ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE public.routine_exercises ADD COLUMN IF NOT EXISTS target_muscle TEXT;
+ALTER TABLE public.routine_exercises ADD COLUMN IF NOT EXISTS is_custom BOOLEAN DEFAULT FALSE;
 
 -- ==============================================================================
 -- 10. TABELA: user_workouts (Sessões de Treino Executadas)

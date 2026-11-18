@@ -170,20 +170,26 @@ export function WorkoutBuilder() {
           }
         }
 
-        // Ligar exercício ao treino com as colunas corretas
+        // Ligar exercício ao treino com compatibilidade total de colunas
+        const relPayload = {
+          routine_id: routineData.id,
+          exercise_id: targetExerciseId,
+          name: ex.name,
+          order_index: i + 1,
+          sets: parseInt(ex.sets) || 3,
+          reps: ex.reps || '10'
+        };
+
         const { error: relError } = await supabase
           .from('routine_exercises')
-          .insert([{
-            routine_id: routineData.id,
-            exercise_id: targetExerciseId,
-            name: ex.name,
-            order_index: i + 1,
-            sets: parseInt(ex.sets) || 3,
-            reps: ex.reps || '10'
-          }]);
+          .insert([relPayload]);
           
         if (relError) {
-          console.warn("Aviso ao salvar exercício na rotina:", relError);
+          // Se o banco dele usar 'sort_order' em vez de 'order_index', tenta com sort_order
+          delete relPayload.order_index;
+          relPayload.sort_order = i + 1;
+          const { error: retryError } = await supabase.from('routine_exercises').insert([relPayload]);
+          if (retryError) console.warn("Aviso ao salvar exercício na rotina:", retryError);
         }
       }
 

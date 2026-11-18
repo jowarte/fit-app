@@ -490,7 +490,14 @@ function TreinosPage() {
         }));
         
         const { error: rxError } = await supabase.from('routine_exercises').insert(exercisesToInsert);
-        if (rxError) console.warn("Aviso ao copiar exercícios:", rxError);
+        if (rxError) {
+          const fallbackInsert = exercisesToInsert.map(item => {
+            const copy = { ...item, sort_order: item.order_index };
+            delete copy.order_index;
+            return copy;
+          });
+          await supabase.from('routine_exercises').insert(fallbackInsert);
+        }
       }
       
       const updatedRoutines = await fetchRoutinesWithExercises();
