@@ -70,14 +70,28 @@ export function AdminSettings() {
         name: 'Usuário Teste'
       };
 
-      const { data, error } = await supabase.functions.invoke('send-webhook', {
-        body: { url, payload }
-      });
+      let sent = false;
+      try {
+        const { data, error } = await supabase.functions.invoke('send-webhook', {
+          body: { url, payload }
+        });
+        if (!error && (data?.success || data?.status === 200)) {
+          sent = true;
+        }
+      } catch (err) {
+        // Edge function pode não estar deployada, prossegue para o fallback direto
+      }
 
-      if (error) throw error;
-      if (data && !data.success) throw new Error(data.error || 'Erro desconhecido');
+      if (!sent) {
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
 
-      setMessage({ type: 'success', text: 'Webhook de teste enviado com sucesso!' });
+      setMessage({ type: 'success', text: 'Webhook de teste disparado com sucesso!' });
     } catch (error) {
       setMessage({ type: 'error', text: 'Erro ao enviar webhook: ' + error.message });
     }

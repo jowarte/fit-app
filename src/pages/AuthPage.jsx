@@ -147,14 +147,24 @@ export function AuthPage({ session: propSession }) {
               const saved = localStorage.getItem('admin_plans');
               if (saved) plans = JSON.parse(saved);
             } catch(e) {}
-            
-            const plan = plans.find(p => p.id === planId);
+
+            let plan = plans.find(p => p.id === planId);
+            if (!plan) {
+              try {
+                const { data: dbPlans } = await supabase.from('plans').select('*');
+                if (dbPlans && dbPlans.length > 0) {
+                  plan = dbPlans.find(p => p.id === planId);
+                }
+              } catch (_) {}
+            }
+
             if (plan) {
               updateData.plan_id = plan.id;
-              if (plan.isTrial) {
+              if (plan.isTrial || plan.is_trial) {
                 updateData.status = 'trial';
+                const days = plan.trialDays || plan.trial_days || 7;
                 const endsAt = new Date();
-                endsAt.setDate(endsAt.getDate() + (plan.trialDays || 7));
+                endsAt.setDate(endsAt.getDate() + days);
                 updateData.trial_ends_at = endsAt.toISOString();
               }
             }
@@ -173,18 +183,31 @@ export function AuthPage({ session: propSession }) {
                 name: name
               };
 
-              // Envia para o n8n
-              if (settings.n8n_webhook_url) {
-                supabase.functions.invoke('send-webhook', {
-                  body: { url: settings.n8n_webhook_url, payload }
-                }).catch(console.error);
-              }
+              const dispatchWebhook = async (url) => {
+                if (!url) return;
+                try {
+                  const { error } = await supabase.functions.invoke('send-webhook', { body: { url, payload } });
+                  if (error) throw error;
+                } catch (_) {
+                  // Fallback direto via browser fetch caso a edge function não esteja ativa
+                  try {
+                    await fetch(url, {
+                      method: 'POST',
+                      mode: 'no-cors',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(payload)
+                    });
+                  } catch (e) {
+                    console.warn('Erro ao disparar webhook direto:', e);
+                  }
+                }
+              };
 
-              // Envia para o Bot Vende (Noé)
+              if (settings.n8n_webhook_url) {
+                dispatchWebhook(settings.n8n_webhook_url);
+              }
               if (settings.bot_vende_webhook_url) {
-                supabase.functions.invoke('send-webhook', {
-                  body: { url: settings.bot_vende_webhook_url, payload }
-                }).catch(console.error);
+                dispatchWebhook(settings.bot_vende_webhook_url);
               }
             }
           } catch(err) {
