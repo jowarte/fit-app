@@ -155,7 +155,7 @@ export function NotificationCenter() {
 
       {/* Modal de E-books */}
       {isEbooksOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem' }}>
           <div className="animate-fade-in glass-card" style={{ width: '100%', maxWidth: '400px', background: 'var(--bg-color)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', borderRadius: '12px' }}>
             
             <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -206,7 +206,7 @@ export function NotificationCenter() {
 
       {/* Painel Lateral / Modal de Notificações */}
       {isOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 100, display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)', zIndex: 1000, display: 'flex', justifyContent: 'flex-end' }}>
           <div className="animate-fade-in" style={{ width: '100%', maxWidth: '400px', background: 'var(--bg-color)', height: '100%', borderLeft: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column' }}>
             
             <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

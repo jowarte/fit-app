@@ -359,7 +359,7 @@ export function WorkoutBuilder() {
 
       {/* Library Modal */}
       {isLibraryOpen && (
-        <div className="animate-fade-in" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'var(--bg-dark)', zIndex: 100, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div className="animate-fade-in" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'var(--bg-dark)', zIndex: 1000, display: 'flex', flexDirection: 'column', overflowY: 'auto', paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 16px))' }}>
           <div style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Library size={20} color="var(--primary-color)" /> Biblioteca de Exercícios

@@ -450,7 +450,7 @@ export function ActiveWorkoutPage() {
 
       {/* Rest timer settings modal */}
       {showRestSettings && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
           <div style={{ background: '#1a1a1a', borderRadius: '20px', padding: '1.5rem', width: '100%', maxWidth: '320px' }}>
             <h3 style={{ margin: '0 0 1rem 0', textAlign: 'center' }}>⏱️ Tempo de descanso</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', marginBottom: '1rem' }}>
@@ -547,10 +547,10 @@ export function ActiveWorkoutPage() {
 
       {/* Add Exercise Modal */}
       {addExerciseModal && (
-        <div className="animate-fade-in" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'var(--bg-dark)', zIndex: 100, display: 'flex', flexDirection: 'column', padding: '1.5rem' }}>
+        <div className="animate-fade-in" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'var(--bg-dark)', zIndex: 1000, display: 'flex', flexDirection: 'column', padding: '1.5rem', paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 16px))' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h2 style={{ margin: 0 }}>Adicionar ao treino</h2>
-            <button onClick={() => { setAddExerciseModal(false); setCatalogSearch(''); }} style={{ background: 'none', border: 'none', color: 'white' }}><X size={24} /></button>
+            <button onClick={() => { setAddExerciseModal(false); setCatalogSearch(''); }} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><X size={24} /></button>
           </div>
           <input
             type="text"
@@ -582,8 +582,40 @@ export function ActiveWorkoutPage() {
 
       {/* Record Set Modal */}
       {recordingExercise && (
-        <div className="animate-fade-in" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
-          <div style={{ width: '100%', background: '#111', borderTopLeftRadius: '28px', borderTopRightRadius: '28px', padding: '1.5rem', maxHeight: '95vh', overflowY: 'auto' }}>
+        <div 
+          className="animate-fade-in" 
+          onClick={(e) => { if (e.target === e.currentTarget) setRecordingExercise(null); }}
+          style={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            background: 'rgba(0,0,0,0.85)', 
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 1000, 
+            display: 'flex', 
+            alignItems: 'flex-end',
+            justifyContent: 'center'
+          }}
+        >
+          <div 
+            style={{ 
+              width: '100%', 
+              maxWidth: '540px',
+              background: '#111', 
+              borderTopLeftRadius: '28px', 
+              borderTopRightRadius: '28px', 
+              padding: '1.5rem', 
+              paddingBottom: 'calc(2.5rem + env(safe-area-inset-bottom, 16px))',
+              maxHeight: '92vh', 
+              overflowY: 'auto',
+              border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 -10px 40px rgba(0,0,0,0.8)',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
             
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
               <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.2)' }}></div>

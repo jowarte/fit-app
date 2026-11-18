@@ -92,6 +92,7 @@ CREATE TABLE IF NOT EXISTS public.plans (
 );
 
 -- ==============================================================================
+-- 5. TABELA: app_settings (Configurações Gerais do App e Webhooks)
 -- 5. TABELA: app_settings (Configurações Gerais do App, Identidade Visual e Webhooks)
 -- ==============================================================================
 CREATE TABLE IF NOT EXISTS public.app_settings (
@@ -121,6 +122,7 @@ CREATE TABLE IF NOT EXISTS public.app_settings (
   evolution_api_key TEXT,
   whatsapp_bot_number TEXT,
   whatsapp_activation_message TEXT DEFAULT 'Olá! Sou aluno e quero ativar meus lembretes de treino neste número.',
+  fb_pixel TEXT
   fb_pixel TEXT,
   sales_page_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -309,6 +311,13 @@ CREATE POLICY "Gerenciar lembretes whatsapp" ON public.whatsapp_reminders FOR AL
 -- ==============================================================================
 
 -- Inserir Configurações Padrão
+INSERT INTO public.app_settings (id, n8n_webhook_url, n8n_webhook_name, bot_vende_webhook_url, bot_vende_webhook_name, evolution_instance, evolution_api_url, evolution_api_key, whatsapp_bot_number, whatsapp_activation_message)
+VALUES (1, 'https://noeflow.com/api/webhooks/ext/webhook-cxgz1', NULL, 'https://noeflow.com/api/webhooks/ext/webhook-gvhdv', NULL, 'cmprvbh0-no-1', 'https://api.noeflow.com', 'Jow123456', '556993681011', 'Sou aluno e quero ativar meus lembretes de treino neste número.')
+ON CONFLICT (id) DO NOTHING;
+
+-- Inserir Planos Padrão
+INSERT INTO public.plans (id, name, price, cycle, checkout_url, is_visible, is_recommended, is_trial, trial_days, features, access_home, access_gym, access_create, access_whatsapp, access_advanced, webhook_product_id)
+VALUES ('1786146397702', 'Standard', '19,90', 'Mensal', 'https://pay.cakto.com.br/spv85bp', TRUE, TRUE, FALSE, 7, '["Acesso ao Treino em Casa","Criar Treinos Personalizados"]'::jsonb, TRUE, FALSE, TRUE, FALSE, TRUE, NULL)
 INSERT INTO public.app_settings (
   id, 
   app_name, 
@@ -342,6 +351,20 @@ VALUES (
   'Olá! Sou aluno e quero tirar dúvidas sobre os treinos.'
 )
 ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  price = EXCLUDED.price,
+  cycle = EXCLUDED.cycle,
+  checkout_url = EXCLUDED.checkout_url,
+  is_visible = EXCLUDED.is_visible,
+  is_recommended = EXCLUDED.is_recommended,
+  is_trial = EXCLUDED.is_trial,
+  trial_days = EXCLUDED.trial_days,
+  features = EXCLUDED.features,
+  access_home = EXCLUDED.access_home,
+  access_gym = EXCLUDED.access_gym,
+  access_create = EXCLUDED.access_create,
+  access_whatsapp = EXCLUDED.access_whatsapp,
+  access_advanced = EXCLUDED.access_advanced;
   app_name = COALESCE(public.app_settings.app_name, EXCLUDED.app_name),
   sales_badge = COALESCE(public.app_settings.sales_badge, EXCLUDED.sales_badge),
   sales_headline = COALESCE(public.app_settings.sales_headline, EXCLUDED.sales_headline),
@@ -350,20 +373,62 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- Inserir Planos Padrão Prontos para Venda
 INSERT INTO public.plans (id, name, price, cycle, checkout_url, is_visible, is_recommended, is_trial, trial_days, features, access_home, access_gym, access_create, access_whatsapp, access_advanced, webhook_product_id)
+VALUES ('1786041274307', 'Free', '', 'Único (Teste)', '', FALSE, FALSE, TRUE, 365, '[]'::jsonb, TRUE, FALSE, FALSE, FALSE, FALSE, NULL)
 VALUES ('plan_free', 'Free (Iniciante)', '0,00', 'Mensal', '', TRUE, FALSE, FALSE, 7, '["Acesso ao Treino em Casa","Diário de Treino Básico"]'::jsonb, TRUE, FALSE, FALSE, FALSE, FALSE, NULL)
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   price = EXCLUDED.price,
   cycle = EXCLUDED.cycle,
+  checkout_url = EXCLUDED.checkout_url,
+  is_visible = EXCLUDED.is_visible,
+  is_recommended = EXCLUDED.is_recommended,
+  is_trial = EXCLUDED.is_trial,
+  trial_days = EXCLUDED.trial_days,
+  features = EXCLUDED.features,
+  access_home = EXCLUDED.access_home,
+  access_gym = EXCLUDED.access_gym,
+  access_create = EXCLUDED.access_create,
+  access_whatsapp = EXCLUDED.access_whatsapp,
+  access_advanced = EXCLUDED.access_advanced;
   is_visible = EXCLUDED.is_visible;
 
 INSERT INTO public.plans (id, name, price, cycle, checkout_url, is_visible, is_recommended, is_trial, trial_days, features, access_home, access_gym, access_create, access_whatsapp, access_advanced, webhook_product_id)
+VALUES ('1', 'Plano Pró / Anual', '149,90', 'Anual', 'https://pay.cakto.com.br/35ry768_1024322', FALSE, TRUE, FALSE, 7, '["Diário de Treino Básico"]'::jsonb, TRUE, TRUE, TRUE, TRUE, TRUE, NULL)
 VALUES ('plan_pro', 'PRO (Recomendado)', '29,90', 'Mensal', '', TRUE, TRUE, FALSE, 7, '["Acesso Total (Casa e Academia)","Criação ilimitada de treinos","Compartilhar no WhatsApp","Gráficos de Evolução","Acesso ao Treino Avançado"]'::jsonb, TRUE, TRUE, TRUE, TRUE, TRUE, NULL)
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   price = EXCLUDED.price,
   cycle = EXCLUDED.cycle,
+  checkout_url = EXCLUDED.checkout_url,
+  is_visible = EXCLUDED.is_visible,
+  is_recommended = EXCLUDED.is_recommended,
+  is_trial = EXCLUDED.is_trial,
+  trial_days = EXCLUDED.trial_days,
+  features = EXCLUDED.features,
+  access_home = EXCLUDED.access_home,
+  access_gym = EXCLUDED.access_gym,
+  access_create = EXCLUDED.access_create,
+  access_whatsapp = EXCLUDED.access_whatsapp,
+  access_advanced = EXCLUDED.access_advanced;
   is_visible = EXCLUDED.is_visible;
+
+INSERT INTO public.plans (id, name, price, cycle, checkout_url, is_visible, is_recommended, is_trial, trial_days, features, access_home, access_gym, access_create, access_whatsapp, access_advanced, webhook_product_id)
+VALUES ('1786146223618', 'Master', '49,90', 'Trimestral', 'https://pay.cakto.com.br/33xoqin', TRUE, FALSE, FALSE, 7, '[]'::jsonb, TRUE, FALSE, FALSE, FALSE, FALSE, NULL)
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  price = EXCLUDED.price,
+  cycle = EXCLUDED.cycle,
+  checkout_url = EXCLUDED.checkout_url,
+  is_visible = EXCLUDED.is_visible,
+  is_recommended = EXCLUDED.is_recommended,
+  is_trial = EXCLUDED.is_trial,
+  trial_days = EXCLUDED.trial_days,
+  features = EXCLUDED.features,
+  access_home = EXCLUDED.access_home,
+  access_gym = EXCLUDED.access_gym,
+  access_create = EXCLUDED.access_create,
+  access_whatsapp = EXCLUDED.access_whatsapp,
+  access_advanced = EXCLUDED.access_advanced;
 
 -- Inserir Exercícios do Catálogo Global (user_exercises com user_id nulo)
 INSERT INTO public.user_exercises (id, user_id, name, muscle_group, equipment)

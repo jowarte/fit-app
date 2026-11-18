@@ -21,11 +21,15 @@ function PokasNav() {
       display: 'flex',
       justifyContent: 'space-around',
       alignItems: 'center',
-      background: '#111',
+      background: 'rgba(17, 17, 17, 0.95)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
       borderTop: '1px solid rgba(255,255,255,0.08)',
-      height: '70px',
+      height: 'calc(70px + env(safe-area-inset-bottom, 0px))',
+      paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       zIndex: 200,
-      padding: '0 1rem'
+      paddingLeft: '1rem',
+      paddingRight: '1rem'
     }}>
       <Link to="/pokas" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
         <Home size={24} color={path === '/pokas' ? 'white' : '#555'} />

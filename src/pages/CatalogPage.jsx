@@ -216,11 +216,53 @@ export function CatalogPage() {
       </div>
 
       {modalOpen && (
-        <div className="animate-fade-in" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <div className="glass-card" style={{ width: '100%', borderBottomLeftRadius: 0, borderBottomRightRadius: 0, padding: '1.5rem', background: 'var(--surface-color)' }}>
+        <div 
+          className="animate-fade-in" 
+          onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}
+          style={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            background: 'rgba(0,0,0,0.85)', 
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 1000, 
+            display: 'flex', 
+            alignItems: 'flex-end', 
+            justifyContent: 'center' 
+          }}
+        >
+          <div 
+            style={{ 
+              width: '100%', 
+              maxWidth: '540px',
+              borderTopLeftRadius: '28px', 
+              borderTopRightRadius: '28px', 
+              borderBottomLeftRadius: 0, 
+              borderBottomRightRadius: 0, 
+              padding: '1.5rem', 
+              paddingBottom: 'calc(2.5rem + env(safe-area-inset-bottom, 16px))',
+              background: '#141416',
+              border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 -10px 40px rgba(0,0,0,0.8)',
+              maxHeight: '88vh',
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            {/* Barra de arraste visual para mobile */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+              <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.2)' }}></div>
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: 0 }}>Novo exercício</h3>
-              <button onClick={() => setModalOpen(false)} style={{ color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold', color: 'white' }}>Novo exercício</h3>
+              <button 
+                onClick={() => setModalOpen(false)} 
+                style={{ color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
                 <X size={18} />
               </button>
             </div>
@@ -230,7 +272,7 @@ export function CatalogPage() {
               placeholder="Nome do exercício" 
               value={newExercise.name}
               onChange={(e) => setNewExercise({...newExercise, name: e.target.value})}
-              style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'white', marginBottom: '1.5rem', fontSize: '1rem' }}
+              style={{ width: '100%', padding: '1rem', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: 'white', marginBottom: '1.5rem', fontSize: '1rem', outline: 'none' }}
             />
             
             <h4 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '0.8rem' }}>Grupo</h4>
@@ -239,7 +281,17 @@ export function CatalogPage() {
                 <button 
                   key={cat}
                   onClick={() => setNewExercise({...newExercise, muscle_group: cat})}
-                  style={{ padding: '0.4rem 0.8rem', borderRadius: '20px', fontSize: '0.85rem', border: '1px solid rgba(255,255,255,0.1)', background: newExercise.muscle_group === cat ? 'white' : 'transparent', color: newExercise.muscle_group === cat ? 'black' : 'var(--text-secondary)' }}
+                  style={{ 
+                    padding: '0.5rem 0.9rem', 
+                    borderRadius: '20px', 
+                    fontSize: '0.85rem', 
+                    border: '1px solid rgba(255,255,255,0.12)', 
+                    background: newExercise.muscle_group === cat ? 'white' : 'rgba(255,255,255,0.04)', 
+                    color: newExercise.muscle_group === cat ? 'black' : 'var(--text-secondary)',
+                    fontWeight: newExercise.muscle_group === cat ? 'bold' : 'normal',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
                 >{cat}</button>
               ))}
             </div>
@@ -250,13 +302,39 @@ export function CatalogPage() {
                 <button 
                   key={eq}
                   onClick={() => setNewExercise({...newExercise, equipment: eq})}
-                  style={{ padding: '0.4rem 0.8rem', borderRadius: '20px', fontSize: '0.85rem', border: '1px solid rgba(255,255,255,0.1)', background: newExercise.equipment === eq ? 'white' : 'transparent', color: newExercise.equipment === eq ? 'black' : 'var(--text-secondary)' }}
+                  style={{ 
+                    padding: '0.5rem 0.9rem', 
+                    borderRadius: '20px', 
+                    fontSize: '0.85rem', 
+                    border: '1px solid rgba(255,255,255,0.12)', 
+                    background: newExercise.equipment === eq ? 'white' : 'rgba(255,255,255,0.04)', 
+                    color: newExercise.equipment === eq ? 'black' : 'var(--text-secondary)',
+                    fontWeight: newExercise.equipment === eq ? 'bold' : 'normal',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
                 >{eq}</button>
               ))}
             </div>
 
-            <button onClick={handleAddExercise} className="btn btn-primary" style={{ width: '100%', padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-              <Trophy size={18} /> Adicionar
+            <button 
+              onClick={handleAddExercise} 
+              className="btn btn-primary animate-scale" 
+              style={{ 
+                width: '100%', 
+                padding: '1.1rem', 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                gap: '0.5rem',
+                fontWeight: 'bold',
+                fontSize: '1.05rem',
+                borderRadius: '14px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(0, 255, 136, 0.3)'
+              }}
+            >
+              <Trophy size={20} /> Salvar Exercício
             </button>
           </div>
         </div>
@@ -264,8 +342,40 @@ export function CatalogPage() {
 
       {/* Exercise Detail Modal */}
       {selectedExercise && (
-        <div className="animate-fade-in" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
-          <div style={{ width: '100%', background: 'var(--surface-color)', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '1.5rem', maxHeight: '80vh', overflowY: 'auto' }}>
+        <div 
+          className="animate-fade-in" 
+          onClick={(e) => { if (e.target === e.currentTarget) setSelectedExercise(null); }}
+          style={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            background: 'rgba(0,0,0,0.85)', 
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 1000, 
+            display: 'flex', 
+            alignItems: 'flex-end',
+            justifyContent: 'center'
+          }}
+        >
+          <div 
+            style={{ 
+              width: '100%', 
+              maxWidth: '540px',
+              background: '#141416', 
+              borderTopLeftRadius: '28px', 
+              borderTopRightRadius: '28px', 
+              padding: '1.5rem', 
+              paddingBottom: 'calc(2.5rem + env(safe-area-inset-bottom, 16px))',
+              maxHeight: '85vh', 
+              overflowY: 'auto',
+              border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 -10px 40px rgba(0,0,0,0.8)',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
             
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
               <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.2)' }}></div>
