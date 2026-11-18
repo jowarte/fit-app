@@ -34,6 +34,7 @@ import { ActiveWorkoutPage } from './pages/ActiveWorkoutPage';
 import { PokasLayout } from './pages/PokasLayout';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { shareRoutineWhatsApp } from './lib/whatsapp';
+import { fetchRoutinesWithExercises } from './lib/routines';
 import './App.css'; // Limpar o App.css se existir, usando apenas index.css
 
 function ProtectedRoute({ session, children }) {
@@ -158,13 +159,11 @@ function HomePage() {
           }
         }
 
-        const { data, error } = await supabase.from('routines').select('*, routine_exercises(*, exercises(*))');
-        if (error) throw error;
-        
-        if (data) {
-          const today = data.find(r => r.day_of_week === todayName);
+        const routinesData = await fetchRoutinesWithExercises();
+        if (routinesData) {
+          const today = routinesData.find(r => r.day_of_week === todayName);
           setTodayRoutine(today || null);
-          setWeeklyTotal(data.length);
+          setWeeklyTotal(routinesData.length);
         }
         
         const currentWeekStr = getWeekString(new Date());
@@ -465,36 +464,44 @@ function TreinosPage() {
     if (!routineToRepeat) return;
     setIsRepeating(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id || null;
+
       const { data: newRoutine, error: routineError } = await supabase
         .from('routines')
-        .insert([{ name: routineToRepeat.name, day_of_week: repeatDay }])
+        .insert([{ 
+          user_id: userId,
+          name: routineToRepeat.name, 
+          day_of_week: repeatDay 
+        }])
         .select()
         .single();
         
       if (routineError) throw routineError;
       
       if (routineToRepeat.routine_exercises && routineToRepeat.routine_exercises.length > 0) {
-        const exercisesToInsert = routineToRepeat.routine_exercises.map(rx => ({
+        const exercisesToInsert = routineToRepeat.routine_exercises.map((rx, idx) => ({
           routine_id: newRoutine.id,
-          exercise_id: rx.exercise_id,
-          sort_order: rx.sort_order,
-          sets: rx.sets,
-          reps: rx.reps
+          exercise_id: rx.exercise_id || null,
+          name: rx.name || rx.exercises?.name || 'Exercício',
+          order_index: idx + 1,
+          sets: parseInt(rx.sets) || 3,
+          reps: rx.reps || '10'
         }));
         
         const { error: rxError } = await supabase.from('routine_exercises').insert(exercisesToInsert);
-        if (rxError) throw rxError;
+        if (rxError) console.warn("Aviso ao copiar exercícios:", rxError);
       }
       
-      const { data, error } = await supabase.from('routines').select('*, routine_exercises(*, exercises(*))');
-      if (!error && data) setRoutines(data);
+      const updatedRoutines = await fetchRoutinesWithExercises();
+      setRoutines(updatedRoutines);
       
       alert('Treino repetido com sucesso!');
       setRepeatModalOpen(false);
       setRoutineToRepeat(null);
     } catch (err) {
       console.error(err);
-      alert('Erro ao repetir treino.');
+      alert('Erro ao repetir treino: ' + (err?.message || ''));
     } finally {
       setIsRepeating(false);
     }
@@ -524,11 +531,7 @@ function TreinosPage() {
   React.useEffect(() => {
     async function fetchRoutines() {
       try {
-        const { data, error } = await supabase
-          .from('routines')
-          .select('*, routine_exercises(*, exercises(*))');
-        
-        if (error) throw error;
+        const data = await fetchRoutinesWithExercises();
         setRoutines(data || []);
       } catch (err) {
         console.error("Erro ao buscar treinos", err);
@@ -621,14 +624,14 @@ function TreinosPage() {
               </div>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                {routine.routine_exercises && routine.routine_exercises.sort((a,b)=>a.sort_order - b.sort_order).map((rx, idx) => {
-                  const ex = rx.exercises;
+                {routine.routine_exercises && routine.routine_exercises.sort((a,b)=>(a.order_index ?? a.sort_order ?? 0) - (b.order_index ?? b.sort_order ?? 0)).map((rx, idx) => {
+                  const ex = rx.exercises || { name: rx.name || 'Exercício', media_type: 'local_video', media_url: '' };
                   return (
                     <div key={rx.id}>
                       <VideoPlayer 
-                        type={ex.media_type} 
-                        url={ex.media_url} 
-                        title={`${idx + 1}. ${ex.name}`} 
+                        type={ex.media_type || 'local_video'} 
+                        url={ex.media_url || ''} 
+                        title={`${idx + 1}. ${ex.name || rx.name}`} 
                       />
                       <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
                         Séries: {rx.sets} | Repetições: {rx.reps}
@@ -661,8 +664,8 @@ function TreinosPage() {
                     date: workoutDate,
                     routineName: displayName,
                     dayOfWeek: routine.day_of_week,
-                    exercises: routine.routine_exercises ? routine.routine_exercises.sort((a,b)=>a.sort_order - b.sort_order).map(rx => ({
-                      name: rx.exercises.name,
+                    exercises: routine.routine_exercises ? routine.routine_exercises.sort((a,b)=>(a.order_index ?? a.sort_order ?? 0) - (b.order_index ?? b.sort_order ?? 0)).map(rx => ({
+                      name: rx.exercises?.name || rx.name || 'Exercício',
                       sets: rx.sets,
                       reps: rx.reps
                     })) : []

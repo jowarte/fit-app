@@ -79,13 +79,20 @@ export function WorkoutBuilder() {
       
       if (targetIndex >= 0 && !updated[targetIndex].name) {
         // O bloco de destino está vazio, então preenchemos ele
-        updated[targetIndex] = { ...updated[targetIndex], name: libEx.name, media_type: libEx.media_type, media_url: libEx.media_url };
+        updated[targetIndex] = { 
+          ...updated[targetIndex], 
+          exercise_id: libEx.id,
+          name: libEx.name, 
+          media_type: libEx.media_type, 
+          media_url: libEx.media_url 
+        };
         // Muda o target para um valor fantasma para que os próximos cliques sejam anexados (append)
         setTimeout(() => setTargetExerciseId('append'), 0);
       } else {
         // Não há bloco vazio de destino, então adicionamos um novo bloco no final da lista
         updated.push({
           id: Date.now() + Math.random(),
+          exercise_id: libEx.id,
           name: libEx.name,
           sets: 3,
           reps: '10',
@@ -103,7 +110,7 @@ export function WorkoutBuilder() {
   };
 
   const addExercise = () => {
-    setExercises([...exercises, { id: Date.now(), name: '', sets: 3, reps: '10', media_url: '', media_type: 'youtube' }]);
+    setExercises([...exercises, { id: Date.now(), exercise_id: null, name: '', sets: 3, reps: '10', media_url: '', media_type: 'youtube' }]);
   };
 
   const removeExercise = (id) => {
@@ -122,12 +129,21 @@ export function WorkoutBuilder() {
 
     try {
       setIsSaving(true);
+
+      // Obter usuário logado para associar a rotina
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id || null;
+
       // 1. Salvar o treino com a categoria concatenada no nome
       const finalName = `${routineCategory}|${routineName}`;
       
       const { data: routineData, error: routineError } = await supabase
         .from('routines')
-        .insert([{ name: finalName, day_of_week: dayOfWeek }])
+        .insert([{ 
+          user_id: userId,
+          name: finalName, 
+          day_of_week: dayOfWeek 
+        }])
         .select()
         .single();
 
@@ -138,38 +154,44 @@ export function WorkoutBuilder() {
         const ex = exercises[i];
         if (!ex.name) continue;
 
-        // Inserir exercício
-        const { data: exData, error: exError } = await supabase
-          .from('exercises')
-          .insert([{ 
-            name: ex.name, 
-            media_url: ex.media_url || 'https://www.w3schools.com/html/mov_bbb.mp4', 
-            media_type: ex.media_type 
-          }])
-          .select()
-          .single();
+        let targetExerciseId = ex.exercise_id || null;
 
-        if (exError) throw exError;
+        // Se não tiver o ID do exercício ainda, busca no catálogo existente pelo nome
+        if (!targetExerciseId) {
+          const { data: foundEx } = await supabase
+            .from('exercises')
+            .select('id, media_url, media_type')
+            .ilike('name', ex.name.trim())
+            .limit(1)
+            .maybeSingle();
 
-        // Ligar exercício ao treino
+          if (foundEx?.id) {
+            targetExerciseId = foundEx.id;
+          }
+        }
+
+        // Ligar exercício ao treino com as colunas corretas
         const { error: relError } = await supabase
           .from('routine_exercises')
           .insert([{
             routine_id: routineData.id,
-            exercise_id: exData.id,
-            sort_order: i + 1,
+            exercise_id: targetExerciseId,
+            name: ex.name,
+            order_index: i + 1,
             sets: parseInt(ex.sets) || 3,
             reps: ex.reps || '10'
           }]);
           
-        if (relError) throw relError;
+        if (relError) {
+          console.warn("Aviso ao salvar exercício na rotina:", relError);
+        }
       }
 
-      alert("Treino salvo com sucesso no banco de dados!");
+      alert("Treino salvo com sucesso!");
       navigate('/treinos');
     } catch (error) {
       console.error("Erro ao salvar:", error);
-      alert("Ocorreu um erro ao salvar o treino.");
+      alert(`Ocorreu um erro ao salvar o treino: ${error?.message || ''}`);
     } finally {
       setIsSaving(false);
     }

@@ -40,7 +40,7 @@ export function shareRoutineWhatsApp(routine) {
   if (exercises.length === 0) {
     msg += `(Nenhum exercício cadastrado)\n`;
   } else {
-    const sorted = [...exercises].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    const sorted = [...exercises].sort((a, b) => (a.order_index ?? a.sort_order ?? 0) - (b.order_index ?? b.sort_order ?? 0));
     sorted.forEach((rx, idx) => {
       const ex = rx.exercises || {};
       const exName = ex.name || rx.name || `Exercício ${idx + 1}`;
