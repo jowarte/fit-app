@@ -570,3 +570,47 @@ BEGIN
     status = 'active';
 
 END $$;
+
+
+-- ==============================================================================
+-- 13. TABELA: system_updates (Central de Atualizações de Versões do App)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.system_updates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  version TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  changelog JSONB DEFAULT '[]'::jsonb,
+  download_url TEXT DEFAULT 'https://github.com/jowarte/fit-app',
+  release_date TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.system_updates ENABLE ROW LEVEL SECURITY;
+
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'system_updates' AND policyname = 'system_updates_select_all'
+  ) THEN
+    CREATE POLICY "system_updates_select_all" ON public.system_updates FOR SELECT USING (true);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'system_updates' AND policyname = 'system_updates_manage_superadmin'
+  ) THEN
+    CREATE POLICY "system_updates_manage_superadmin" ON public.system_updates FOR ALL USING (
+      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
+    );
+  END IF;
+END $$;
+
+-- Inserir versão inicial caso a tabela esteja vazia
+INSERT INTO public.system_updates (version, title, description, changelog, download_url)
+SELECT 
+  '1.2.0',
+  'Alarme Sonoro no Cronômetro, Otimização Mobile e Estabilidade Total',
+  'Versão com apito de academia no descanso, melhorias visuais e banco de dados otimizado.',
+  '["Alarme sonoro com apito e vibração ao zerar o cronômetro de descanso", "Botão de silenciar ou ativar alarme no timer", "Correção de botões ocultos em celulares e telas pequenas", "Salvamento de treinos 100% sem conflitos de banco", "Carregamento fluído de todos os exercícios em vídeo e GIF"]'::jsonb,
+  'https://github.com/jowarte/fit-app'
+WHERE NOT EXISTS (SELECT 1 FROM public.system_updates LIMIT 1);

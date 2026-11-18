@@ -1,0 +1,14 @@
+{
+  "version": "1.2.0",
+  "release_date": "18/11/2026",
+  "title": "Super Atualização: Alarme de Descanso, Mobile e Estabilidade Total",
+  "changelog": [
+    "Alarme sonoro com apito e vibração ao zerar o descanso no treino",
+    "Botão de silenciar ou ativar alarme diretamente no cronômetro",
+    "Otimização e correção de botões ocultos em celulares e telas pequenas",
+    "Salvamento de treinos 100% livre de conflitos de banco de dados",
+    "Exibição fluida de GIFs e vídeos de demonstração"
+  ],
+  "download_url": "https://github.com/jowarte/fit-app",
+  "min_supported_version": "1.0.0"
+}

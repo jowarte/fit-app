@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Dumbbell, Users, Settings, MessageCircle, CreditCard, ShoppingCart, Bell, Lock, ShieldAlert, Home, Megaphone, LogOut } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, Users, Settings, MessageCircle, CreditCard, ShoppingCart, Bell, Lock, ShieldAlert, Home, Megaphone, LogOut, RefreshCw, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { checkForUpdates } from '../../lib/updates';
 
 export function AdminLayout() {
   const location = useLocation();
@@ -13,9 +14,15 @@ export function AdminLayout() {
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [updateAvailable, setUpdateAvailable] = useState(null);
 
   useEffect(() => {
     checkUser();
+    checkForUpdates().then(res => {
+      if (res?.hasUpdate) {
+        setUpdateAvailable(res.remoteVersion);
+      }
+    }).catch(() => {});
   }, [location.pathname]);
 
   async function checkUser() {
@@ -301,6 +308,29 @@ export function AdminLayout() {
           <Bell size={20} />
           <span>Sininho Push</span>
         </Link>
+
+        <Link 
+          to="/admin/updates"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '0.75rem 1rem',
+            borderRadius: '8px',
+            textDecoration: 'none',
+            color: path === '/admin/updates' ? 'var(--bg-color)' : 'var(--text-color)',
+            background: path === '/admin/updates' ? 'var(--primary-color)' : 'transparent',
+            transition: 'all 0.2s'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <RefreshCw size={20} />
+            <span>Atualizações</span>
+          </div>
+          {updateAvailable && (
+            <span style={{ background: '#ef4444', color: 'white', borderRadius: '10px', padding: '2px 7px', fontSize: '0.7rem', fontWeight: 'bold' }}>
+              NOVA
+            </span>
+          )}
+        </Link>
         
         <button 
           onClick={handleLogout}
@@ -323,6 +353,37 @@ export function AdminLayout() {
 
       {/* Main Content Area */}
       <main style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
+        {updateAvailable && path !== '/admin/updates' && (
+          <div style={{
+            background: 'linear-gradient(90deg, rgba(6,182,212,0.18), rgba(168,85,247,0.18))',
+            border: '1px solid rgba(6,182,212,0.4)',
+            padding: '0.85rem 1.25rem',
+            borderRadius: '12px',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Sparkles color="#06b6d4" size={22} />
+              <div>
+                <strong style={{ color: '#06b6d4' }}>🚀 Nova Atualização do App Disponível (v{updateAvailable.version})!</strong>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginLeft: '0.5rem' }}>
+                  {updateAvailable.title}
+                </span>
+              </div>
+            </div>
+            <Link 
+              to="/admin/updates" 
+              className="btn btn-primary"
+              style={{ padding: '0.45rem 0.95rem', fontSize: '0.85rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+            >
+              <RefreshCw size={14} /> Atualizar Agora
+            </Link>
+          </div>
+        )}
         <Outlet context={{ isSuperAdmin }} />
       </main>
     </div>

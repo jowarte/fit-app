@@ -19,6 +19,7 @@ import { AdminNotifications } from './pages/admin/AdminNotifications';
 import { AdminAnnouncements } from './pages/admin/AdminAnnouncements';
 import { AnnouncementsModal } from './components/AnnouncementsModal';
 import { AdminTeam } from './pages/admin/AdminTeam';
+import { AdminUpdates } from './pages/admin/AdminUpdates';
 import { ConfigPage } from './pages/ConfigPage';
 import { SalesPage } from './pages/SalesPage';
 import { ConquistasPage } from './pages/ConquistasPage';
@@ -920,6 +921,7 @@ function App() {
               <Route path="announcements" element={<AdminAnnouncements />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="team" element={<AdminTeam />} />
+              <Route path="updates" element={<AdminUpdates />} />
             </Route>
 
             {/* Redirecionamento padrão */}
