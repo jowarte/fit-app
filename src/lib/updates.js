@@ -1,6 +1,7 @@
 import { CURRENT_VERSION, RELEASE_DATE, CURRENT_CHANGELOG } from '../version';
 
-const GITHUB_RAW_ENDPOINT = 'https://raw.githubusercontent.com/jowarte/fit-app/main/public/version.json';
+const GITHUB_PRIMARY = 'https://raw.githubusercontent.com/jowarte/fit-app/main/public/version.json';
+const GITHUB_BACKUP = 'https://raw.githubusercontent.com/jowarte/bigfit/main/public/version.json';
 
 /**
  * Compara duas versões (ex: '1.2.1' e '1.2.0')
@@ -23,27 +24,40 @@ export function compareVersions(remote, local) {
 
 /**
  * Verifica se há uma atualização disponível consultando o repositório oficial no GitHub
- * Isso funciona para 100% dos clientes sem precisar de nenhuma tabela no banco de dados deles!
+ * Com cache-bust (sem cache antigo) e servidor de contingência (fallback redundante)
  */
 export async function checkForUpdates() {
   let remoteInfo = null;
 
-  try {
-    const res = await fetch(`${GITHUB_RAW_ENDPOINT}?t=${Date.now()}`);
-    if (res.ok) {
-      const json = await res.json();
-      remoteInfo = {
-        version: json.version,
-        release_date: json.release_date || '',
-        title: json.title || 'Atualização Oficial do Sistema',
-        description: json.description || '',
-        changelog: Array.isArray(json.changelog) ? json.changelog : [],
-        download_url: json.download_url || 'https://github.com/jowarte/fit-app',
-        source: 'github'
-      };
+  const endpoints = [
+    `${GITHUB_PRIMARY}?t=${Date.now()}`,
+    `${GITHUB_BACKUP}?t=${Date.now()}`
+  ];
+
+  for (const url of endpoints) {
+    try {
+      const res = await fetch(url, {
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.version) {
+          remoteInfo = {
+            version: json.version,
+            release_date: json.release_date || '',
+            title: json.title || 'Atualização Oficial do Sistema',
+            description: json.description || '',
+            changelog: Array.isArray(json.changelog) ? json.changelog : [],
+            download_url: json.download_url || 'https://github.com/jowarte/fit-app',
+            source: 'github'
+          };
+          break; // Sucesso, não precisa tentar o backup
+        }
+      }
+    } catch (err) {
+      // Tenta próximo endpoint
     }
-  } catch (err) {
-    // Se estiver offline ou falhar rede
   }
 
   // Se a rede falhar, assume a versão local
