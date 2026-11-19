@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { 
   RefreshCw, CheckCircle2, AlertTriangle, Sparkles, Send, 
-  ExternalLink, Rocket, HelpCircle, ShieldCheck, Clock
+  ExternalLink, Rocket, HelpCircle, ShieldCheck, Clock, GitBranch,
+  ChevronDown, ChevronUp, Lock
 } from 'lucide-react';
 import { checkForUpdates, publishSystemUpdate, triggerVercelDeploy } from '../../lib/updates';
 import { CURRENT_VERSION, RELEASE_DATE, CURRENT_CHANGELOG } from '../../version';
+import { supabase } from '../../lib/supabase';
 
 export function AdminUpdates() {
   const context = useOutletContext() || {};
@@ -14,15 +16,18 @@ export function AdminUpdates() {
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
   const [updateInfo, setUpdateInfo] = useState(null);
+  const [userEmail, setUserEmail] = useState('');
   
-  // Vercel Deploy Hook configuration
+  // Opção Avançada colapsável (Deploy Hook)
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [deployHookUrl, setDeployHookUrl] = useState(() => {
     return localStorage.getItem('fitapp_vercel_deploy_hook') || '';
   });
   const [deploying, setDeploying] = useState(false);
   const [deploySuccess, setDeploySuccess] = useState(false);
 
-  // Super Admin Publisher Form
+  // Modo Desenvolvedor / Publicador
+  const [showPublisher, setShowPublisher] = useState(false);
   const [pubVersion, setPubVersion] = useState('');
   const [pubTitle, setPubTitle] = useState('');
   const [pubChangelog, setPubChangelog] = useState('');
@@ -32,7 +37,21 @@ export function AdminUpdates() {
 
   useEffect(() => {
     runCheck();
+    checkCurrentUser();
   }, []);
+
+  const checkCurrentUser = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email) {
+        setUserEmail(session.user.email);
+        // Se for o criador oficial, já habilita a visualização do publicador
+        if (session.user.email === 'admin@admin.com') {
+          setShowPublisher(true);
+        }
+      }
+    } catch (_) {}
+  };
 
   const runCheck = async () => {
     setChecking(true);
@@ -50,12 +69,12 @@ export function AdminUpdates() {
   const handleSaveDeployHook = (e) => {
     e.preventDefault();
     localStorage.setItem('fitapp_vercel_deploy_hook', deployHookUrl.trim());
-    alert('Deploy Hook salvo com sucesso no navegador!');
+    alert('Deploy Hook salvo com sucesso!');
   };
 
   const handleTriggerDeploy = async () => {
     if (!deployHookUrl) {
-      alert('Por favor, informe seu Deploy Hook da Vercel no campo abaixo.');
+      alert('Abra as configurações avançadas abaixo para configurar seu Deploy Hook ou atualize diretamente pelo GitHub.');
       return;
     }
     setDeploying(true);
@@ -108,6 +127,7 @@ export function AdminUpdates() {
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '3rem' }}>
+      
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
@@ -116,7 +136,7 @@ export function AdminUpdates() {
             Central de Atualizações
           </h1>
           <p style={{ color: 'var(--text-secondary)', margin: '0.3rem 0 0 0', fontSize: '0.95rem' }}>
-            Acompanhe versões, sincronize novidades e envie melhorias para suas cópias.
+            Acompanhe o status da sua versão e as novidades oficiais do aplicativo.
           </p>
         </div>
 
@@ -144,7 +164,7 @@ export function AdminUpdates() {
       {/* Status Card */}
       {loading ? (
         <div className="glass-card" style={{ padding: '2rem', textAlign: 'center' }}>
-          <p>Consultando status das atualizações...</p>
+          <p>Consultando status das versões...</p>
         </div>
       ) : hasUpdate ? (
         <div 
@@ -175,20 +195,35 @@ export function AdminUpdates() {
                   Versão {remote?.version} — {remote?.title}
                 </h2>
                 <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  Sua versão atual instalada é <strong>v{CURRENT_VERSION}</strong>. Clique abaixo para atualizar sua cópia.
+                  Sua versão atual instalada é <strong>v{CURRENT_VERSION}</strong>. Novas melhorias estão disponíveis para sua cópia!
                 </p>
               </div>
             </div>
 
-            <button 
-              onClick={handleTriggerDeploy}
-              disabled={deploying}
-              className="btn btn-primary"
-              style={{ padding: '0.8rem 1.4rem', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <Rocket size={18} />
-              {deploying ? 'Atualizando na Vercel...' : 'Atualizar Minha Cópia'}
-            </button>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              {deployHookUrl ? (
+                <button 
+                  onClick={handleTriggerDeploy}
+                  disabled={deploying}
+                  className="btn btn-primary"
+                  style={{ padding: '0.8rem 1.4rem', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Rocket size={18} />
+                  {deploying ? 'Atualizando na Vercel...' : 'Atualizar Minha Cópia'}
+                </button>
+              ) : (
+                <a 
+                  href="https://github.com/jowarte/fit-app" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="btn btn-primary"
+                  style={{ padding: '0.8rem 1.4rem', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}
+                >
+                  <GitBranch size={18} />
+                  Sincronizar no GitHub
+                </a>
+              )}
+            </div>
           </div>
 
           {deploySuccess && (
@@ -197,7 +232,7 @@ export function AdminUpdates() {
               <div>
                 <strong>Comando de deploy enviado com sucesso para a Vercel!</strong>
                 <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)' }}>
-                  A Vercel está reconstruindo seu app agora. Aguarde cerca de 1 a 2 minutos e recarregue a página.
+                  A Vercel está reconstruindo seu app agora. Aguarde cerca de 1 minuto e recarregue a página.
                 </div>
               </div>
             </div>
@@ -228,79 +263,19 @@ export function AdminUpdates() {
                 Seu aplicativo está na versão mais recente!
               </h3>
               <p style={{ margin: '0.2rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                Versão instalada: <strong>v{CURRENT_VERSION}</strong> (Última compilação: {RELEASE_DATE})
+                Versão instalada: <strong>v{CURRENT_VERSION}</strong> (Compilação: {RELEASE_DATE})
               </p>
             </div>
           </div>
           <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            🟢 Tudo atualizado e operacional
+            🟢 Nenhuma atualização pendente
           </span>
         </div>
       )}
 
-      {/* Grid: 2 Colunas */}
+      {/* Grid: Novidades e Como Funciona */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-        {/* Card: Como Funciona a Atualização */}
-        <div className="glass-card" style={{ padding: '1.5rem', borderRadius: '16px' }}>
-          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Rocket size={20} color="var(--primary-color)" />
-            Atualização em 1 Clique (Vercel)
-          </h3>
-          <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            Configure seu <strong>Deploy Hook</strong> da Vercel uma única vez. Assim, basta clicar em "Atualizar" para seu app baixar as melhorias automaticamente!
-          </p>
-
-          <form onSubmit={handleSaveDeployHook} style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div>
-              <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
-                URL do Deploy Hook da Vercel:
-              </label>
-              <input 
-                type="url"
-                value={deployHookUrl}
-                onChange={(e) => setDeployHookUrl(e.target.value)}
-                placeholder="https://api.vercel.com/v1/integrations/deploy/prj_.../..."
-                style={{
-                  width: '100%',
-                  padding: '0.7rem 0.9rem',
-                  borderRadius: '8px',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  color: 'white',
-                  fontSize: '0.85rem'
-                }}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: '0.6rem' }}>
-              <button 
-                type="submit" 
-                className="btn" 
-                style={{ flex: 1, padding: '0.65rem', background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.85rem' }}
-              >
-                Salvar Hook
-              </button>
-              <button 
-                type="button"
-                onClick={handleTriggerDeploy}
-                disabled={deploying}
-                className="btn btn-primary"
-                style={{ flex: 1, padding: '0.65rem', fontSize: '0.85rem' }}
-              >
-                {deploying ? 'Disparando...' : 'Testar Atualização'}
-              </button>
-            </div>
-          </form>
-
-          <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-            <span style={{ fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-              <HelpCircle size={14} /> Como pegar meu Deploy Hook na Vercel?
-            </span>
-            1. Abra seu projeto no painel da Vercel.<br/>
-            2. Vá em <strong>Settings</strong> ➔ <strong>Git</strong> ➔ <strong>Deploy Hooks</strong>.<br/>
-            3. Dê um nome (ex: "AutoUpdate") e clique em <em>Create Hook</em>. Cole o link aqui!
-          </div>
-        </div>
-
+        
         {/* Card: Novidades e Changelog */}
         <div className="glass-card" style={{ padding: '1.5rem', borderRadius: '16px' }}>
           <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -308,7 +283,7 @@ export function AdminUpdates() {
             O que há de novo (v{hasUpdate ? remote?.version : CURRENT_VERSION})
           </h3>
           <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-            Recursos, melhorias de desempenho e novidades implementadas:
+            Recursos, melhorias e novidades incluídas nesta versão:
           </p>
 
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -319,22 +294,82 @@ export function AdminUpdates() {
               </li>
             ))}
           </ul>
+        </div>
 
-          <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-            <a 
-              href="https://github.com/jowarte/fit-app" 
-              target="_blank" 
-              rel="noreferrer"
-              style={{ color: 'var(--primary-color)', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
-            >
-              Ver repositório oficial no GitHub <ExternalLink size={14} />
-            </a>
+        {/* Card: Como Funcionam as Atualizações */}
+        <div className="glass-card" style={{ padding: '1.5rem', borderRadius: '16px' }}>
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <GitBranch size={20} color="var(--primary-color)" />
+            Como Minha Cópia é Atualizada?
+          </h3>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.9rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <strong style={{ color: 'white', display: 'block', marginBottom: '0.3rem' }}>
+                🔄 1. Atualização Automática
+              </strong>
+              Se a sua hospedagem foi configurada pelo desenvolvedor, as melhorias entram <strong>automaticamente</strong> no seu aplicativo sem você precisar fazer nada!
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.9rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <strong style={{ color: 'white', display: 'block', marginBottom: '0.3rem' }}>
+                🐙 2. Sincronização no GitHub
+              </strong>
+              Se você tem o código no seu próprio GitHub, basta abrir o seu repositório e clicar no botão <strong>"Sync Fork"</strong>. A Vercel atualiza seu app em 1 minuto.
+            </div>
+
+            {/* Sanfona de Opção Avançada */}
+            <div style={{ paddingTop: '0.5rem' }}>
+              <button 
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  fontSize: '0.8rem',
+                  padding: 0
+                }}
+              >
+                {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                <span>Opção Avançada: Deploy Hook da Vercel</span>
+              </button>
+
+              {showAdvanced && (
+                <form onSubmit={handleSaveDeployHook} style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  <input 
+                    type="url"
+                    value={deployHookUrl}
+                    onChange={(e) => setDeployHookUrl(e.target.value)}
+                    placeholder="Cole seu Deploy Hook da Vercel..."
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 0.8rem',
+                      borderRadius: '8px',
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      color: 'white',
+                      fontSize: '0.8rem'
+                    }}
+                  />
+                  <button type="submit" className="btn" style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.1)', color: 'white', fontSize: '0.8rem' }}>
+                    Salvar Hook
+                  </button>
+                </form>
+              )}
+            </div>
+
           </div>
         </div>
+
       </div>
 
-      {/* ÁREA EXCLUSIVA PARA O SUPER ADMIN (VOCÊ) */}
-      {isSuperAdmin && (
+      {/* ÁREA EXCLUSIVA DO CRIADOR / DESENVOLVEDOR MESTRE (VOCÊ) */}
+      {showPublisher && (
         <div 
           className="glass-card" 
           style={{ 
@@ -344,14 +379,20 @@ export function AdminUpdates() {
             background: 'linear-gradient(180deg, rgba(255, 193, 7, 0.05), rgba(0,0,0,0.2))'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
-            <span style={{ background: '#ffc107', color: 'black', fontSize: '0.75rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px' }}>
-              EXCLUSIVO SUPER ADMIN
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span style={{ background: '#ffc107', color: 'black', fontSize: '0.75rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px' }}>
+                PAINEL DO CRIADOR DO SOFTWARE
+              </span>
+              <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Publicar Nova Versão para Todas as Cópias</h2>
+            </div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              🔒 Visível apenas para a conta mestre ({userEmail})
             </span>
-            <h2 style={{ margin: 0, fontSize: '1.3rem' }}>Lançar Nova Atualização para Todas as Cópias</h2>
           </div>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-            Ao publicar aqui, <strong>todas as pessoas que usam o app receberão um aviso de atualização</strong> no topo dos seus painéis de administração.
+
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '1.5rem' }}>
+            Quando você lançar uma versão nova aqui, <strong>todas as pessoas que compraram o app verão o aviso no painel delas</strong> para atualizar.
           </p>
 
           {publishMessage && (
@@ -420,7 +461,7 @@ export function AdminUpdates() {
                 Novidades e Melhorias (coloque uma por linha):
               </label>
               <textarea 
-                rows={4}
+                rows={3}
                 value={pubChangelog}
                 onChange={(e) => setPubChangelog(e.target.value)}
                 placeholder="• Alarme sonoro com apito e vibração&#10;• Correção de botões em celulares&#10;• Mais de 50 novos exercícios adicionados"
@@ -442,8 +483,8 @@ export function AdminUpdates() {
               disabled={publishing}
               className="btn btn-primary"
               style={{
-                padding: '0.85rem 1.5rem',
-                fontSize: '1rem',
+                padding: '0.8rem 1.4rem',
+                fontSize: '0.95rem',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -455,12 +496,13 @@ export function AdminUpdates() {
                 cursor: publishing ? 'not-allowed' : 'pointer'
               }}
             >
-              <Send size={18} />
+              <Send size={16} />
               {publishing ? 'Disparando Atualização...' : 'Publicar Atualização para Todas as Cópias'}
             </button>
           </form>
         </div>
       )}
+
     </div>
   );
 }
