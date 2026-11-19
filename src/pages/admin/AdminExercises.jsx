@@ -199,12 +199,6 @@ export function AdminExercises() {
             {selectedFolder ? `Pasta: ${selectedFolder}` : 'Pastas de Exercícios'}
           </h1>
         </div>
-        
-        {!isEditing && (
-          <button className="btn btn-primary" onClick={handleNewExercise} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Plus size={18} /> Novo Exercício
-          </button>
-        )}
       </div>
 
       {isEditing && (

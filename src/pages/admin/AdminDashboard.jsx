@@ -310,11 +310,11 @@ export function AdminDashboard() {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <div style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.5rem', borderRadius: '8px' }}>
-                <Plus size={18} />
+                <Dumbbell size={18} />
               </div>
               <div>
-                <strong style={{ color: 'white', fontSize: '0.9rem', display: 'block' }}>Novo Exercício</strong>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Adicionar ao catálogo</span>
+                <strong style={{ color: 'white', fontSize: '0.9rem', display: 'block' }}>Pastas de Exercícios</strong>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Ver catálogo completo</span>
               </div>
             </div>
             <ArrowUpRight size={16} color="var(--text-secondary)" />
