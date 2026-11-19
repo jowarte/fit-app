@@ -236,6 +236,34 @@ export function ActiveWorkoutPage() {
     return () => clearInterval(interval);
   }, []);
 
+  async function fetchCatalog() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      
+      let query = supabase.from('user_exercises').select('*').order('name');
+      if (userId) {
+        query = query.or(`user_id.is.null,user_id.eq.${userId}`);
+      }
+      const { data, error } = await query;
+      if (error) {
+        console.warn('Erro com filtro or em user_exercises, buscando com fallback:', error);
+        const { data: directData } = await supabase.from('user_exercises').select('*').order('name');
+        setCatalog(directData || []);
+      } else {
+        setCatalog(data || []);
+      }
+    } catch (err) {
+      console.error('fetchCatalog error:', err);
+    }
+  }
+
+  useEffect(() => {
+    if (addExerciseModal) {
+      fetchCatalog();
+    }
+  }, [addExerciseModal]);
+
   async function fetchWorkoutData(wId) {
     const { data: workoutExs, error: wxErr } = await supabase
       .from('workout_exercises')
@@ -244,21 +272,7 @@ export function ActiveWorkoutPage() {
     if (wxErr) console.error('workout_exercises error:', wxErr);
     setExercises(workoutExs || []);
     
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
-      let query = supabase.from('user_exercises').select('*').order('name');
-      if (userId) {
-        query = query.or(`user_id.is.null,user_id.eq.${userId}`);
-      } else {
-        query = query.is('user_id', null);
-      }
-      const { data: catData, error: catErr } = await query;
-      if (catErr) console.error('catalog error:', catErr);
-      setCatalog(catData || []);
-    } catch (err) {
-      console.error('fetchCatalog error:', err);
-    }
+    await fetchCatalog();
   }
 
   async function handleSelectExercise(ex) {
@@ -569,7 +583,19 @@ export function ActiveWorkoutPage() {
           />
           <div style={{ overflowY: 'auto', flex: 1, paddingBottom: '2rem' }}>
             {filteredCatalog.length === 0 ? (
-              <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '2rem' }}>Nenhum exercício encontrado.</p>
+              <div style={{ textAlign: 'center', padding: '2.5rem 1rem' }}>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '1.25rem', fontSize: '0.95rem' }}>
+                  {catalogSearch ? `Nenhum exercício encontrado com o termo "${catalogSearch}".` : 'Nenhum exercício encontrado.'}
+                </p>
+                <button 
+                  type="button"
+                  onClick={() => { setAddExerciseModal(false); navigate('/pokas/exercicios'); }}
+                  className="btn btn-primary"
+                  style={{ padding: '0.65rem 1.25rem', fontSize: '0.9rem' }}
+                >
+                  + Ir para Catálogo de Exercícios
+                </button>
+              </div>
             ) : filteredCatalog.map(catEx => (
               <div 
                 key={catEx.id}
