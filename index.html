@@ -24,16 +24,24 @@
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window, document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '2119024148651706');
-    fbq('track', 'PageView');
+
+    // Inicialização dinâmica através do Pixel configurado no painel Admin
+    try {
+      var _cachedPixel = localStorage.getItem('fb_pixel');
+      if (_cachedPixel) {
+        var _cleanPixel = _cachedPixel.replace(/\D/g, '');
+        if (_cleanPixel && _cleanPixel.length >= 5) {
+          fbq('init', _cleanPixel);
+          fbq('track', 'PageView');
+          window._currentFbPixel = _cleanPixel;
+        }
+      }
+    } catch(e) {}
     </script>
     <!-- End Meta Pixel Code -->
   </head>
   <body>
-    <!-- Meta Pixel Code (noscript fallback) -->
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=2119024148651706&ev=PageView&noscript=1"
-    /></noscript>
+    <noscript id="fb-pixel-noscript"></noscript>
 
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>

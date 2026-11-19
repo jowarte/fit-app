@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Mail, Lock, LogIn, UserPlus, User, LogOut, ArrowRight } from 'lucide-react';
 import { DEFAULT_PLANS } from '../lib/permissions';
+import { trackPixelEvent } from '../lib/pixel';
 
 export function AuthPage({ session: propSession }) {
   const navigate = useNavigate();
@@ -171,6 +172,12 @@ export function AuthPage({ session: propSession }) {
           }
 
           await supabase.from('profiles').update(updateData).eq('id', data.user.id);
+
+          // Rastreia evento de conversão no Meta Pixel
+          try {
+            trackPixelEvent('CompleteRegistration', { content_name: planId || 'free' });
+            trackPixelEvent('Lead', { content_name: planId || 'free' });
+          } catch(e) {}
 
           // Avisa o n8n e Bot Vende sobre o novo cadastro
           try {

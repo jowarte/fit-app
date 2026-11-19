@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Eye, Copy, Check, Sparkles, Wand2, RefreshCw, Save, ExternalLink, Bot, Key, AlertCircle } from 'lucide-react';
+import { ShoppingCart, Eye, Copy, Check, Sparkles, Wand2, RefreshCw, Save, ExternalLink, Bot, Key, AlertCircle, PlayCircle, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { AI_PROVIDERS, PROMPT_TEMPLATES, generateSalesCopy } from '../../lib/aiSales';
+import { initFacebookPixel, trackPixelEvent, sanitizePixelId } from '../../lib/pixel';
 
 export function AdminSalesLink() {
   const [copied, setCopied] = useState(false);
@@ -37,6 +38,9 @@ export function AdminSalesLink() {
   useEffect(() => {
     // Carregar cache local primeiro para resposta rápida
     try {
+      const cachedPixel = localStorage.getItem('fb_pixel');
+      if (cachedPixel) setFbPixel(cachedPixel);
+
       const local = localStorage.getItem('sales_page_content');
       if (local) {
         const p = JSON.parse(local);
@@ -55,7 +59,10 @@ export function AdminSalesLink() {
       try {
         const { data } = await supabase.from('app_settings').select('*').eq('id', 1).single();
         if (data) {
-          if (data.fb_pixel) setFbPixel(data.fb_pixel);
+          if (data.fb_pixel) {
+            setFbPixel(data.fb_pixel);
+            localStorage.setItem('fb_pixel', data.fb_pixel);
+          }
           if (data.ai_provider) setAiProvider(data.ai_provider);
           if (data.ai_api_key) setAiApiKey(data.ai_api_key);
           if (data.ai_prompt) setAiPrompt(data.ai_prompt);
@@ -75,12 +82,37 @@ export function AdminSalesLink() {
   }, []);
 
   const handleSavePixel = async () => {
-    try {
-      await supabase.from('app_settings').upsert({ id: 1, fb_pixel: fbPixel });
-      setSavedMessage('Pixel salvo com sucesso!');
-    } catch(e) {
-      setSavedMessage('Pixel salvo localmente!');
+    const cleanId = sanitizePixelId(fbPixel);
+    if (fbPixel && cleanId.length < 5) {
+      setSavedMessage('⚠️ Digite um ID numérico válido (ex: 123456789012345)');
+      setTimeout(() => setSavedMessage(''), 4000);
+      return;
     }
+
+    try {
+      localStorage.setItem('fb_pixel', cleanId);
+      if (cleanId) {
+        initFacebookPixel(cleanId);
+      }
+      await supabase.from('app_settings').upsert({ id: 1, fb_pixel: cleanId });
+      setFbPixel(cleanId);
+      setSavedMessage(cleanId ? '✅ Pixel do Facebook salvo e ativado!' : '✅ Pixel removido com sucesso!');
+    } catch(e) {
+      setSavedMessage('✅ Pixel salvo localmente no navegador!');
+    }
+    setTimeout(() => setSavedMessage(''), 4000);
+  };
+
+  const handleTestPixel = () => {
+    const cleanId = sanitizePixelId(fbPixel);
+    if (!cleanId) {
+      setSavedMessage('⚠️ Salve um Pixel primeiro antes de testar!');
+      setTimeout(() => setSavedMessage(''), 3000);
+      return;
+    }
+    initFacebookPixel(cleanId);
+    trackPixelEvent('PageView');
+    setSavedMessage('🎯 Teste enviado! Verifique o Meta Pixel Helper ou console.');
     setTimeout(() => setSavedMessage(''), 4000);
   };
 
@@ -497,28 +529,63 @@ export function AdminSalesLink() {
         </div>
 
         {/* Facebook Pixel */}
-        <div className="glass-card" style={{ padding: '1.8rem' }}>
-          <h3 style={{ margin: '0 0 0.5rem 0', color: 'white' }}>Pixel do Facebook Ads</h3>
-          <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Adicione o ID do seu Pixel para rastrear visitas e conversões na página de vendas.
+        <div className="glass-card" style={{ padding: '1.8rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.5rem' }}>
+            <h3 style={{ margin: 0, color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              🎯 Pixel do Facebook / Meta Ads
+            </h3>
+            {fbPixel && fbPixel.length >= 5 && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.3)', padding: '0.3rem 0.8rem', borderRadius: '20px', color: '#4ade80', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                <ShieldCheck size={15} /> Pixel Ativo: {fbPixel}
+              </span>
+            )}
+          </div>
+
+          <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+            Adicione apenas o número identificador do seu Pixel da Meta. O sistema configurará e disparará os eventos automaticamente:
+            <br />
+            • <strong style={{ color: 'white' }}>PageView</strong>: Ao abrir a página inicial ou de planos.
+            <br />
+            • <strong style={{ color: 'white' }}>InitiateCheckout</strong>: Quando o visitante clica no botão de assinar qualquer plano.
           </p>
+
           <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column' }}>
-            <input 
-              type="text" 
-              placeholder="Ex: 123456789012345"
-              value={fbPixel}
-              onChange={(e) => setFbPixel(e.target.value)}
-              style={{ padding: '0.8rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', fontSize: '0.95rem' }}
-            />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ position: 'relative' }}>
+              <input 
+                type="text" 
+                placeholder="Cole aqui seu Pixel ID (ex: 2119024148651706)"
+                value={fbPixel}
+                onChange={(e) => setFbPixel(e.target.value.replace(/\D/g, ''))}
+                style={{ width: '100%', padding: '0.9rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: 'white', fontSize: '1rem', letterSpacing: '0.5px' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
               <button 
+                type="button"
                 onClick={handleSavePixel}
                 className="btn btn-primary" 
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.4rem' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', fontWeight: 'bold' }}
               >
                 <Check size={18} /> Salvar Pixel
               </button>
-              {savedMessage && <span style={{ color: 'var(--primary-color)', fontSize: '0.9rem' }}>{savedMessage}</span>}
+
+              {fbPixel && (
+                <button 
+                  type="button"
+                  onClick={handleTestPixel}
+                  className="btn" 
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.2rem', background: 'rgba(255,255,255,0.08)', color: 'white', border: '1px solid rgba(255,255,255,0.15)' }}
+                >
+                  <PlayCircle size={18} /> Testar Disparo
+                </button>
+              )}
+
+              {savedMessage && (
+                <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: savedMessage.includes('⚠️') ? '#f87171' : 'var(--primary-color)' }}>
+                  {savedMessage}
+                </span>
+              )}
             </div>
           </div>
         </div>

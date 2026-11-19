@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { initFacebookPixel, trackInitiateCheckout } from '../lib/pixel';
 import { CheckCircle2, Star, Dumbbell, Smartphone, Activity, ArrowRight, X, Clock, Play, Users, Sparkles, Shield, Zap } from 'lucide-react';
 
 const DEFAULT_PLANS = [
@@ -74,10 +75,13 @@ export function SalesPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    // Acionar evento de PageView para o Facebook Pixel
-    if (window.fbq) {
-      window.fbq('track', 'PageView');
-    }
+    // 0. Inicializar Facebook Pixel a partir do cache local se existir
+    try {
+      const cachedPixel = localStorage.getItem('fb_pixel');
+      if (cachedPixel) {
+        initFacebookPixel(cachedPixel);
+      }
+    } catch(e) {}
 
     // 1. Ler cache local imediatamente
     try {
@@ -125,6 +129,9 @@ export function SalesPage() {
             document.documentElement.style.setProperty('--primary-color', settings.primary_color);
           }
           if (settings.seo_title) document.title = settings.seo_title;
+          if (settings.fb_pixel) {
+            initFacebookPixel(settings.fb_pixel);
+          }
         }
 
         const { data: plansData, error: plansError } = await supabase.from('plans').select('*').order('created_at', { ascending: true });
@@ -469,6 +476,7 @@ export function SalesPage() {
 
                 <button 
                   onClick={() => {
+                    trackInitiateCheckout(plan);
                     if (plan.checkoutUrl) {
                       window.open(plan.checkoutUrl, '_blank');
                     } else {
